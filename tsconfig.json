@@ -1,39 +1,32 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "outDir": "./lib",
-    "esModuleInterop": true,
-    "strict": true,
-    "allowJs": true,
-    "typeRoots": ["./src/types", "./node_modules/@types"],
-    "resolveJsonModule": true,
-    "rootDir": "./src"
-  },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules"],
-  "typedocOptions": {
-    "mode": "modules",
-    "out": "tsdocs",
-    "exclude": ["test", "node_modules"],
-    "theme": "default",
-    "ignoreCompilerErrors": true,
-    "excludePrivate": true,
-    "excludeNotExported": true,
-    "target": "ES5",
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "module": "es2022",
     "moduleResolution": "node",
-    "preserveConstEnums": true,
-    "stripInternal": true,
-    "suppressExcessPropertyErrors": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "module": "commonjs"
-  },
-  "references": [
-    {
-      "path": "./packages/server-api"
-    },
-    {
-      "path": "./packages/resources-provider-plugin"
+    "importHelpers": true,
+    "target": "es2022",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2018",
+      "es2020",
+      "es2022",
+      "dom"
+    ],
+    "paths": {
+      "ol": ["node_modules/@types/ol"],
+      "ol/*": ["node_modules/@types/ol/*"]
     }
-  ]
+  },
+  "angularCompilerOptions": {
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true
+  }
 }
