@@ -1,229 +1,251 @@
-# Signal K Server
-![Signal K logo](https://user-images.githubusercontent.com/5200296/226164888-d33b2349-e608-4bed-965f-ebe4339b4376.png)
+# Freeboard-SK
+Freeboard-SK is a stateless, multi-station, Openlayers based chart plotter for Signal K.
+Use it to display:
+- Resources _(i.e. routes, waypoints, notes, charts, etc)_
+- Alarms & notifications
+- AIS information
+- Weather information
+- Signal K instrument WebApps.
 
-[![npm version](https://badge.fury.io/js/signalk-server.svg)](https://badge.fury.io/js/signalk-server)
-[![npm license](https://img.shields.io/npm/l/signalk-server.svg)](https://www.npmjs.com/package/signalk-server)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+and more from any web enabled device.
 
-[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/signalk)](https://opencollective.com/signalk)
+![screen](https://user-images.githubusercontent.com/38519157/128667564-0f5e1ed6-eaae-40c7-ad62-5e7011c1f082.png)
 
-## Contents
-* [Introduction](#introduction)
-* [Signal K Platform](#signal-k-platform)
-* [Documentation, Community & support](#documentation-community--support)
-* [How to get Signal K Server](#how-to-get-signal-k-server)
-* [Configuration and use](#configuration-and-use)
-* [Supported PGNs, Sentences and more](#supported-pgns-sentences-and-more)
-* [Development](#development)
-* [Sponsoring Signal K](#sponsoring-signal-k)
-* [License](#license)
+See the [FAQs](https://github.com/SignalK/freeboard-sk/wiki) for more information.
 
-## Introduction
-Signal K Server is a server application that runs on a central hub in a boat. If you use or develop marine electronics, Signal K Server has something to offer for you.
+## Features:
 
-### Boaters and Boat Owners
-For boaters, Signal K Server runs in the background and makes functionality and data available to other apps and devices.
-One of its most used features is to be a wireless AIS and navigation server for popular apps like Navionics, iSailor, iNavX, Aqua Map and WilhelmSK on your phones and tablets.
+### Vessel / Chart Display:
 
-Signal K Server can also take care of the anchor watch, be a weather station or an automatic logbook for you.
-A different example, it can turn your boat into a MarineTraffic station which may give free access to [the MarineTraffic professional plans](https://help.marinetraffic.com/hc/en-us/articles/360017183497-As-a-station-owner-am-I-entitled-to-a-free-Subscription-).
-These are all just examples: there is far more to Signal K Server.
+Moving map display with:
 
-If you are a boat owner, you can easily run Signal K Server on a Victron Cerbo GX, RaspberryPi or similar hardware. To take full advantage, you will probably want to connect it to your boat network via NMEA 0183 or NMEA 2000 but it is not a requirement.
+- Multiple chart overlay using both of online and locally served charts 
+- Built in support (no plugin required) for OpenStreetMap and OpenSeaMap(from Signal K server)  
+- North-up / Vessel-up orientation   
+- Moving Map / Moving Vessel
+- Vessel Heading / Bearing lines
+- Wind True / Apparent display
+- Closest point of approach
 
-### Marine Vendors
-For Marine vendors who build marine hardware and software, for example those developing navigation, monitoring and tracking systems, Signal K Server is an opportunity to accelerate development and decrease time to market, by taking advantage of a proven, modern and extensible software platform that is open source and available with a permissive Apache 2.0 license. Signal K Server is implemented in Node.js and is easy to integrate into modern systems that run Linux derivatives.
+and more.
 
-Signal K Server is already running inside products developed by Victron Energy, Airmar Technology and others.
+Charts are sourced from the `/resources/charts` path on the Signal K server and the following chart types / sources are supported:
 
-### Software Developers & Boat Electronics Hobbyists
-There are many boaters who happen to be highly skilled software developers and engineers, who want to build software for themselves and share with others. If you are one of them, Signal K offers you a free, modern and open platform developed by boaters for other boaters like you. Signal K Server features an extensible [plugin framework](./docs/src/develop/plugins/server_plugin.md), [web applications](./docs/src/develop/webapps.md) as well as a rich set of [REST](https://signalk.org/specification/1.7.0/doc/rest_api.html) and [Streaming APIs](https://signalk.org/specification/1.7.0/doc/streaming_api.html).
+- Image tiles _(XYZ)_
+- Vector Tiles _(MVT / PBF)_
+- [S57 ENC's converted to vector tiles](#S57-charts) _(MVT / PBF)_
+- WMS _(Web Map Server)_
+- WMTS _(Web Map Tile Server)_
+- PMTiles _(ProtoMap files)_
 
-Signal K Server takes care of all the complicated parts of protocol decode, and conversions to and from NMEA2000, NMEA0183 and many more protocols. It can also act as data hub for additional sensors, see the [Signal K SensESP project](https://github.com/SignalK/SensESP) for [ESP32](https://en.wikipedia.org/wiki/ESP32).
+---
 
-Signal K Server makes the data available in JSON format according to the [Signal K standard specification](https://signalk.org/specification/latest/). This allows developers to bypass all the hurdles typically encountered when wanting to implement something for a boat. [Getting started with a plugin](./docs/src/develop/plugins/server_plugin.md#getting-started-with-plugin-development) is surprisingly easy.
+### Resources:  
 
-## Signal K Platform
+Freeboard-SK supports the creation, editing and deletion of all resource types defined in the Signal K specification that are available under the `/resources` path.
 
-Signal K is more than just the Signal K Server, it is a comprehensive platform that encompasses three major components:
+__Routes and Waypoints:__
 
-1. **The Signal K Data Standard**: an open marine data standard. It is a modern data format for marine use, suitable for WiFi, cellphones, tablets and the internet. It is built on standard web technologies including JSON, WebSockets and HTTP. More information on [https://signalk.org](https://signalk.org/index.html).
-2. **Signal K Server**: Software in this GitHub repository and described in this document. Signal K server is a full stack application developed in Node.js. Its back-end multiplexes data from and to NMEA0183, NMEA 2000, Signal K and other marine protocols, as well as WiFi, LAN and Internet, and provides APIs and websockets for access and control. Its front-end provides an extensible web-based application allowing easy configuration and management of server functions and capabilities.
-3. **Signal K Plugins and Webapps**: Built using the extensibility of Signal K Server with a plugin framework, allows developers to develop applications that easily integrate with Signal K server, extend its capabilities and publish them through npm. All published plugins become available in all existing Signal K server installations, which provides an easy distribution mechanism.
+_Path(s): `/resources/routes`, `/resources/waypoints`_
 
-## Documentation, Community & Support
+- Show / Hide Routes & Waypoints
+- Set a Waypoint as a destination
+- Set an active Route
+- Select destination point along an Active Route
+- Create / Edit / Delete Routes
+- Create / Edit / Delete Waypoints
+- Create Waypoint at current vessel position
+- Import Routes and Waypoints from GPX files
+- Attach Notes to Routes & Waypoints
 
-[Documentation for Signal K Server](https://demo.signalk.org/documentation).
+__Notes and Regions:__
 
-See [Github Discussions](https://github.com/SignalK/signalk/discussions/) and [Discord (chat)](https://discord.gg/uuZrwz4dCS).
+_Path(s): `/resources/notes`, `/resources/regions`_
 
-There is a [Signal K Server FAQ Frequently Asked Questions](https://github.com/SignalK/signalk-server/wiki/FAQ:-Frequently-Asked-Questions) on the Wiki, including [How do I integrate with NMEA2000 (CAN bus)](https://github.com/SignalK/signalk-server/wiki/FAQ:-Frequently-Asked-Questions#how-do-i-integrate-with-nmea2000-can-bus).
+- Display Notes and Regions
+- View / Edit Note properties
+- Draw Regions and attach Notes
+- Add / Edit / Delete Notes
+- Attach Notes to Regions
 
-## How to get Signal K Server?
+__Tracks:__
 
-For the typical boater, not being a software developer nor electrical engineer, the best option is to get a (commercially available) product that already has Signal K Server inside. These are the currently available devices:
+Whilst not specifically defined in the Signal K specification, Freeboard-SK supports the import and display of tracks from GPX files which are available under the `/resources/tracks` path.
 
-* [SmartBoat module](https://www.airmar.com/productdescription.html?id=231&trk=organization_guest_main-feed-card_feed-article-content) by Airmar
-* [Cerbo GX](https://www.victronenergy.com/panel-systems-remote-monitoring/cerbo-gx) and other GX Devices by Victron Energy  ([see Venus OS Large manual](https://www.victronenergy.com/live/venus-os:large))
+- Show / Hide Tracks
+- Delete Tracks
 
-For a more technical DIY oriented boater, a RaspberryPi based setup offers a very cost-attractive alternative.
-Read [this FAQ entry](https://github.com/SignalK/signalk-server/wiki/FAQ:-Frequently-Asked-Questions#how-do-i-integrate-with-nmea2000-can-bus) to learn how to connect a RaspberryPi to an NMEA2000 network.
+---
 
-These prebuilt images for RaspberryPis take away most of the complexity involved from the software side:
+### Autopilot Console:  
 
-* [BBN Marine OS](https://github.com/bareboat-necessities/lysmarine_gen#what-is-lysmarine-bbn-edition)
-* [OpenPlotter](https://openmarine.net/openplotter) by OpenMarine
-* [Venus OS for RaspberryPis](https://github.com/victronenergy/venus/wiki/raspberrypi-install-venus-image) by Victron Energy
+Freeboard-SK supports the Signal K Autopilot API which enables common operations to be performed
+including:
+- Engage / Disengage the autopilot
+- Setting the operation mode e.g. compass, route, gps, etc.
+- Setting and adjusting the target heading
+- Dodging obstacles
 
-You can run Signal K Server in Docker:
+![image](https://github.com/user-attachments/assets/e771fa83-92cd-4e65-ad78-a349646049c8)
 
-* [Docker quickstart instructions](https://github.com/SignalK/signalk-server/blob/master/docker/README.md#quickstart)
+---
 
-Or in a Kubernetes cluster:
+### Alarms and Notifications:
 
-* [Kubernetes quickstart instructions](https://github.com/SignalK/signalk-server/blob/master/kubernetes/README.md#quickstart)
+Freeboard-SK can display alarms _(visual and audio)_ & messages contained in *Notification* messages transmitted by the Signal K server.
 
-And an installer for Windows:
+Additionally you can set alarms, including _anchor watch_, as well as raise alarms such as _man overboard_, _sinking_, etc directly from the user interface.
 
-* [https://github.com/SignalK/signalk-server-windows](https://github.com/SignalK/signalk-server-windows)
+Supported alarm types include:
+- Depth
+- Closest Approach
+- Anchor drag / watch
+- "Buddy" notifications
+- All Signal K specification defined alarms.
 
-Another level up, this document explains how to install Signal K Server, as well as its dependencies, on a RaspberryPi that is already running Raspberry Pi OS:
 
-* [Installation on a RaspberryPi](./docs/src/installation/raspberry_pi_installation.md)
+Freeboard-SK also implements API endpoints to accept requests for raising and clearing Signal K specification defined alarms. 
 
-Last, here is how to install the Signal K Server application from NPM:
+_See OpenAPI documentation in Signal K Server Admin UI for details._
 
-Prerequisites:
-* Node.js version 18 with latest npm installed (the server works for the time being on Node version >=16)
 
-    $ sudo npm install -g signalk-server
+---
 
-Now you can start the server with sample data:
-* NMEA0183 sample data: `signalk-server --sample-nmea0183-data`
-* NMEA2000 sample data: `signalk-server --sample-n2k-data`
+### History Playback
 
-To generate your own vessel settings file and configure the server to start automatically, run:
+Freeboard-SK supports the Signal K `playback` api and can replay recorded time-series data captured on a Signal K server equipped with the `signalk-to-infludb` plugin.
 
-    $ sudo signalk-server-setup
+---
 
-## Configuration and use
+### Instruments: 
 
-### Opening the Signal K Server Admin UI
+Freeboard-SK allows you to use your favourite instrumentation apps installed on the Signal K server.
 
-For all described options of running Signal K Server, ie. on an Airmar Smartboat, a Victron Cerbo GX or a RaspberryPi, the way to configure it is via the Admin UI.
-Open the Admin UI by navigating to http://[ipaddress]:3000/. Here is what it will look like when opened up on a Victron Cerbo GX:
+Select one or more installed applications listed in the `settings` screen and they will displayed in the instrument drawer.
 
-![image](https://user-images.githubusercontent.com/5200296/226478726-568d8ea3-5f46-4e7b-b964-4fdefb386c32.png)
+When more than one app is selected you can cycle through them within the instrument drawer.
 
-The top of the screen shows some actual stats. Below that is a pane showing all configured Connections & Plugins. These are the plugins shown in above screenshot:
+_Note: The `Signal K Instrument Panel` app will be displayed if no user selection has been made._
 
-- `sk-to-nmea0183` is the plugin that makes navigation data available on WiFi and/or LAN (TCP); typically used by apps on phones and tablets.
-- `signalk-n2kais-nmea0183` is another plugin, does the same, but then for AIS data
-- `venus` is a plugin that connects to the data bus inside the Victron GX device
-- `n2k-on-ve.can-socket` is not a plugin but a data connection. This one defines the Signal K Server connection to the NMEA2000 CAN-bus port.
+![instruments](https://user-images.githubusercontent.com/38519157/128668406-02cbb8d8-2353-4e93-ae5e-12e0c7d507fe.png)
 
-### Creating an admin account
+---
 
-The first thing to do is create an admin account. This is done in the Settings -> Users page:
+### S57 Charts
 
-![image](https://user-images.githubusercontent.com/5200296/226754646-3bc60ddb-245a-4bd2-ab2f-b5539bdefa77.png)
+Freeboard-SK is able to display S57 ENC charts that have been converted to vector tiles with [s57-tiler](https://github.com/wdantuma/s57-tiler). _(See the [README](https://github.com/wdantuma/s57-tiler) for instructions how to create the vector tiles from downloaded S57 ENC's.)_
 
-Besides recommended from a security point of view, setting an admin account also enables the Restart button.
+See [Open CPN chart sources](https://opencpn.org/OpenCPN/info/chartsource.html) for a list of locations to source charts.
 
-After creating the account, the server needs to be restarted.
-How to do that depends on how you are using Signal K Server: self installed from NPM, embedded on a commercial device or otherwise.
-Power cycling the device that Signal K Server is running on will always work.
+_Note: Only unencrypted ENC's are supported (no S63 support)._
 
-### Setting up data connections
+**_Requires: @signalk/charts-plugin_**
 
-This screenshot shows how to setup an NMEA0183 connection:
 
-![image](https://user-images.githubusercontent.com/5200296/226479444-853570cb-83ea-4246-afbe-06cafd48d790.png)
+![S57 chart](https://github.com/SignalK/freeboard-sk/assets/38519157/a93b3889-d1c8-4df7-9f6f-97a1666fbf77)
 
-### Installing Plugins and Webapps
+Rendering of the Shallow, safety and deep depths and can be configured in the settings dialog
 
-The Appstore menu is where to add, update and remove Plugins and Webapps:
+![S57 Settings](https://github.com/SignalK/freeboard-sk/assets/38519157/0409492b-1ee7-4905-b5b0-e5fc8e68bc9a)
 
-![image](https://user-images.githubusercontent.com/5200296/226479620-303a2e6e-a4f7-4ecb-b1f1-a668fb147d23.png)
+_Note: This functionality is not a replacement for official navigational charts_
 
-The entries with the blue icons are Webapps. The entries with the green icons are Plugins. An internet connection is required for Signal K Server to fetch information about availble Plugins and webapps.
+---
 
-Typically, plugins make for functionality such as protocol conversion. And Webapps provide a user interface, up to a fully featured Chartplotter that runs in a web browser:
+### Experiments: 
 
-![image](https://user-images.githubusercontent.com/5200296/226479871-6f3769af-4fa4-43d6-871f-4a54bec372fa.png)
+Features that are not ready for "prime time" are made available as experiments.
 
-To install Plugins and Webapps, click the "Available" menu on the left. It will show a categorised list of all available Plugins:
+To make experimental features available from within the Freeboard-SK user interface, you need to ensure the **Experimental Features** option is checked in **Settings**.
 
-![image](https://user-images.githubusercontent.com/5200296/226480596-f65f5429-57d5-4d31-bb13-615d5664e2c4.png)
+_Note: Some experiments will require configuration of Freeboard-SK via the _Plugin Config_ screen of the Signal K Server Admin UI._
 
-It is also possible to search for and browse Plugins and Webapps in the NPM registry:
+---
 
-  * [Plugins](https://www.npmjs.com/search?q=keywords%3Asignalk-node-server-plugin)
-  * [Webapps](https://www.npmjs.com/search?q=keywords:signalk-webapp)
+## System Requirements:
 
-### Restart after Configuration Changes and Plugin/Webapp Installation
+**Freeboard-SK requires _Signal K Server Version 2.0 or above**.
 
-Most configuration changes and installing add-ons from the App store require a server restart to take effect. See Restart button at the top right or restart the server manually (details depend on your setup). If the restart button is not showing, that is usually because security is not activate and there is no Admin user.
 
-### Configuring Plugins
+The following features require that the Signal K server have plugins / providers installed to service the following paths:
 
-After the restart, the new Plugin needs to be enabled and configured. See the Server -> Plugin Config menu:
+- `resources/charts` - Ability to view charts.
 
-![image](https://user-images.githubusercontent.com/5200296/226481818-18c5cbe1-9118-4555-ab8b-1622c3e9404b.png)
+- `navigation/anchor`, `notifications/navigation/anchor` - Ability to set anchor alarm and display notifications.
 
-### Vessel Base Data and Server Settings
+- `notifications/environment/depth` - Display depth notifications.
 
-![image](https://user-images.githubusercontent.com/5200296/226482046-dfb759dc-abbb-4987-a810-a24b77d0927e.png)
+- `signalk/v1/playback` (Playback API) - Replay of recorded vessel data.
 
-![image](https://user-images.githubusercontent.com/5200296/226482099-b9dd46ff-72a6-44e4-b384-1d15a4621e63.png)
+- `vessels/self/track` - Display of vessel track stored on server.
 
-You can change the admin application's top left logo by placing a SVG file named `logo.svg` in the settings directory (default: $HOME/.signalk/). You can also provide a minimized square version of the logo in a file named `logo-minimized.svg` that will be shown when the sidebar is minimized.
+- `vessels/self/navigation/course/calcValues` - Display of calculated course values such as DTG, XTE, etc.
 
-### Server Log
 
-If the Admin UI is available, go to Server -> Server Log to see the server's log. Different errors are logged there, so in case of trouble make sure to check not only the Admin UI but also the server log.
+### Recommended Plugins:
 
-To activate more details debug logging enter the the names of the components you want to debug. Some of the debug keys are listed with toggles to activate them.
+The following plugins are recommended for installation on the Signal K Server to enable full functionality:
 
-With the Remember debug setting enabled, the configured debug keys parameter is stored in a settings file, ie. survives a server restart.
+- @signalk/course-provider _(Course calculations e.g. XTE, DTG, etc.)_
+- @signalk/charts-plugin *(Mapbox tiles chart provider)*
+- signalk-pmtiles-plugin *(ProtoMaps chart provider)*
+- signalk-anchoralarm-plugin _(Anchor alarm settings & notifications)_
+- signalk-simple-notifications _(Depth alarm notifications)_
 
-![image](https://user-images.githubusercontent.com/5200296/227020518-ac8b4355-5902-45a5-9d6c-0e9d1dc9e630.png)
+---
 
-To enable debugging without going through the Admin UI, see the file `~/.signalk/debug` and add the required debug keys there. For example: `@signalk/aisreporter,signalk-server:udp-provider`.
+## Development:
 
-## Supported PGNs, sentences and more
+Freeboard-SK is an Angular project.
 
-* NMEA2000 PGNs: Reading NMEA2000 data is done by [n2k-signalk](https://github.com/SignalK/n2k-signalk) via [canboatjs](https://github.com/canboat/canboatjs). [Canboat PGN database](https://canboat.github.io/canboat/canboat.html)
-* NMEA0183 sentences: [nmea0183-signalk](https://github.com/SignalK/signalk-parser-nmea0183)
-* TODO ADD OTHER SUPPORTED PROTOCOLS
+It is recommended that the Angular CLI be installed globally `npm i -g @angular/cli@latest` prior to following the steps below.
 
-## Development
+1. Clone this repository.
 
-The documents provide more details about developing Webapps or Plugings for Signal K Server, as well as working on the server itself:
+2. Run `npm i` to install project dependencies.
 
-* [Contributing to this repo](docs/src/develop/contributing.md)
-* [Server Plugins](docs/src/develop/plugins/server_plugin.md)
-* [Webapps](docs/src/develop/webapps.md)
-* [Working with the Course API](docs/src/develop/rest-api/course_api.md)
-* [Working with the Resources API](docs/src/develop/rest-api/resources_api.md)
-* [Resource Provider Plugins](docs/src/develop/plugins/resource_provider_plugins.md)
-* [Security](docs/src/security.md)
+3. Run `npm start` or `ng serve` to start a development web server and then navigate to `http://localhost:4200/` to load the application. The application will automatically reload once you save changes to any of the source files.
 
-## Sponsoring Signal K
+### Note:
 
-See Signal K on [Open Collective](https://opencollective.com/signalk).
+The Freeboard-SK application will look to connect to a Signal K server at the *ip address:port* contained in the url of your browser. 
 
-## License
-Copyright [2015] [Fabian Tollenaar, Teppo Kurki and Signal K committers]
+In development mode you are able to specify the Signal K server host address and port you wish to connect to by editing the `DEV_SERVER` object in the `src/app/app.info.ts` file.
+```
+DEV_SERVER { 
+    host: '192.168.99.100', 
+    port; 3000, 
+    ssl: false 
+}
+```
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+_Note: These settings apply in **Development Mode** only!_
 
-    http://www.apache.org/licenses/LICENSE-2.0
+_They will __NOT__ apply when using **Production Mode**, the generated application will attempt to connect to a Signal K api / stream on the hosting server._
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+---
+
+### Building a Release:
+
+__Building the Application:__
+
+To build all components of the application _(plugin and webapp)_ ready for release use the `npm run build:prod` command.
+
+__Building components individually:__
+
+- To build only the _webapp_ use the command `npm run build:web`.
+- To build only the _helper plugin_ use the command `npm run build:helper`.
+
+Built files _(for deployment)_ are placed in the following folders:
+-  `/public` _(Freeboard-SK web app)_
+-  `/plugin` _(Freeboard-SK plugin)_
+
+__Building the NPM package:__
+
+To build the NPM package use the `npm pack` command to:
+1. Execute `npm run build:prod`
+1. Create the NPM package (`.tgz`) file in the root folder of the project.
+
+---
+
+_**Freeboard-SK** is a port of http://www.42.co.nz/freeboard for use with Signal K communication protocols and server features._

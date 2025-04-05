@@ -1,3 +1,0 @@
-#!/bin/sh
-
-actisense-serial /dev/tty.usbserial-1FD34 | analyzer -json | tee >(n2kd)
