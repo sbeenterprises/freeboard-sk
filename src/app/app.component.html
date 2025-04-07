@@ -314,8 +314,6 @@
           </div>
           } @if(app.data.autopilot.console) {
           <autopilot-console></autopilot-console>
-          } @if(app.config.selections.remoteControl) {
-            <remote-control (close)="toggleRemoteControl()"></remote-control>
           } @if(app.data.buildRoute.show) {
           <route-builder (save)="skres.showRouteNew($event)"> </route-builder>
           } @if(!app.data.kioskMode && !this.app.data.map.suppressContextMenu) {
