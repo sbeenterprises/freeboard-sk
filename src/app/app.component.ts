@@ -213,6 +213,9 @@ export class AppComponent {
     // ** connect to signalk server and intialise
     this.connectSignalKServer();
 
+    // Connect to MOOS-IvP websocket
+    this.connectMOOSIvPServer();
+
     // ********************* SUBSCRIPTIONS *****************
     // ** SIGNAL K STREAM **
     this.obsList.push(
@@ -563,6 +566,49 @@ export class AppComponent {
           setTimeout(() => this.connectSignalKServer(), 5000);
         }
       );
+  }
+
+  // Connection to MOOS-IvP websocket
+  private connectMOOSIvPServer(): void {
+    const host = this.app.hostName || 'localhost';
+    const wsUrl = `ws://${host}:8000`;
+  
+    // Optionally, clear any previous connection state
+    this.app.data.moosIvPServer = null;
+  
+    // Initialize the WebSocket connection
+    const moosSocket = new WebSocket(wsUrl);
+    
+    // Save the socket if you need to reference it later
+    this.app.data.moosIvPServer = { socket: moosSocket, url: wsUrl, connected: false };
+
+    moosSocket.onopen = (event: Event) => {
+      console.log(`Connected to MOOS-IvP WebSocket server at ${wsUrl}`, event);
+      this.app.data.moosIvPServer.connected = true;
+      // Send an optional subscription or handshake message if required by MOOS-IvP
+      moosSocket.send("DEPLOY=false");
+    };
+
+    moosSocket.onerror = (error: Event) => {
+      console.error('Error connecting to MOOS-IvP server:', error);
+      this.app.showMessage('Unable to contact MOOS-IvP server! (Retrying in 5 secs)', false, 5000);
+    };
+
+    moosSocket.onclose = (event: CloseEvent) => {
+      console.warn('MOOS-IvP WebSocket connection closed:', event);
+      this.app.data.moosIvPServer.connected = false;
+      // Attempt reconnect after 5 seconds
+      setTimeout(() => {
+        this.connectMOOSIvPServer();
+      }, 5000);
+    };
+    
+    moosSocket.onmessage = (message: MessageEvent) => {
+      console.log('Received MOOS-IvP message:', message.data);
+      // Process incoming data. Adjust based on MOOS-IvP message format.
+      // const data = JSON.parse(message.data);
+      // this.handleMOOSIvPMessage(data);
+    };
   }
 
   // ** discover server features **
@@ -1128,15 +1174,51 @@ export class AppComponent {
 
   //Function added to activate remote control
   public toggleRemoteControl() {
+    // Alterna o estado do controle remoto e salva a configuração
     this.app.config.selections.remoteControl = !this.app.config.selections.remoteControl;
-    this.app.saveConfig(); // se quiser salvar a escolha do usuário
+    this.app.saveConfig(); 
+  
+    // Define a mensagem baseada no novo valor
+    const message = this.app.config.selections.remoteControl 
+      ? "CONTROLE_MANUAL=true" 
+      : "CONTROLE_MANUAL=false";
+  
+    // Verifica se a conexão MOOS-IvP está ativa antes de enviar
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      this.app.data.moosIvPServer.socket.send(message);
+    } else {
+      console.warn("Conexão MOOS-IvP não estabelecida ou não está aberta!");
+    }
   }
+  
   
    //Function added to activate autonomous control
    public toggleAutonomousControl() {
+    // Alterna o estado do controle autônomo e salva a configuração
     this.app.config.selections.autonomousControl = !this.app.config.selections.autonomousControl;
-    this.app.saveConfig(); // se quiser salvar a escolha do usuário
+    this.app.saveConfig();
+  
+    // Define a mensagem baseada no novo valor
+    const message = this.app.config.selections.autonomousControl 
+      ? "AUTONOMOUS_CONTROL=true" 
+      : "AUTONOMOUS_CONTROL=false";
+  
+    // Verifica se a conexão MOOS-IvP está ativa antes de enviar
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      this.app.data.moosIvPServer.socket.send(message);
+    } else {
+      console.warn("Conexão MOOS-IvP não estabelecida ou não está aberta!");
+    }
   }
+  
 
   // ***** EDIT MENU ACTONS *******
 

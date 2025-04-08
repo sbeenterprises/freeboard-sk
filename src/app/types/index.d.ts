@@ -159,4 +159,9 @@ export interface FBAppData {
     coords: Array<Position>;
     index: number;
   };
+  moosIvPServer?: {
+    socket: WebSocket;
+    url: string;
+    connected: boolean;
+  };
 }
