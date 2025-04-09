@@ -5,6 +5,7 @@ import {
   withInterceptorsFromDi
 } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule } from '@angular/forms';
 
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +15,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatCardModule } from '@angular/material/card';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+
 
 // ***
 import { AppComponent } from './app.component';
@@ -31,7 +36,8 @@ import {
   NoteListComponent,
   TrackListComponent,
   AISListComponent,
-  BuildRouteComponent
+  BuildRouteComponent,
+  RemoteControlComponent
 } from './modules';
 
 import {
@@ -57,6 +63,10 @@ import {
     MatIconModule,
     MatTooltipModule,
     MatProgressBarModule,
+    MatSliderModule,
+    MatCardModule,
+    DragDropModule,
+    FormsModule,
     BrowserModule,
     BrowserAnimationsModule,
     FBMapComponent,
@@ -80,7 +90,8 @@ import {
     AnchorWatchComponent,
     AlertComponent,
     AlertListComponent,
-    RouteNextPointComponent
+    RouteNextPointComponent,
+    RemoteControlComponent
   ],
   providers: [provideHttpClient(withInterceptorsFromDi())]
 })

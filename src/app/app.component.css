@@ -201,28 +201,24 @@ mat-nav-list {
 }
 
 .button-remote-active {
-    background-color: #1976d2; /* laranja chamativo */
+    background-color: #1976d2; /* blue */
     color: white;
   }
   
 .button-northup-active {
-background-color: #1976d2; /* azul Material padrão */
-color: white;
+    background-color: #1976d2; /* default Material blue */
+    color: white;
 }
   
 .button-autonomous-active {
-    background-color: #1976d2; /* laranja chamativo */
+    background-color: #1976d2; /* blue */
     color: white;
-  }
+}
 
 .remote-control-panel {
-position: absolute; /* or fixed, depending on preference */
-top: 100px; 
-right: 100px; 
-z-index: 999;
-padding: 1rem;
-background: #333; /* or #fff, etc. */
-border-radius: 4px;
-color: white; /* if using dark background */
+    position: fixed;
+    top: 100px; 
+    left: 100px; 
+    z-index: 5000;
+    background-color: transparent;
 }
-  

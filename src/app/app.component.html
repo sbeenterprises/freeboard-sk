@@ -436,8 +436,8 @@
               <button
                 mat-mini-fab
                 [ngClass]="{
-                  'button-remote-active': app.config.selections.remoteControl,
-                  'button-toolbar': !app.config.selections.remoteControl
+                  'button-remote-active': display.remoteControl,
+                  'button-toolbar': !display.remoteControl
                 }"
                 (click)="toggleRemoteControl()"
                 matTooltip="Activate Remote Control"
@@ -897,6 +897,13 @@
             (closed)="toggleAlertList(false)"
           ></alert-list>
           }
+          
+          <!-- Remote Control Panel -->
+          <div class="remote-control-panel" *ngIf="display.remoteControl">
+            <remote-control
+              (closed)="display.remoteControl = false"
+            ></remote-control>
+          </div>
           <div class="alarmPanel">
             @for(n of notiMgr.alerts(); track n[0]) {
             <span style="margin-bottom: 5px">

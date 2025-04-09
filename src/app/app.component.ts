@@ -91,6 +91,7 @@ export class AppComponent {
     trackList: false,
     aisList: false,
     anchorWatch: false,
+    remoteControl: false,
     navDataPanel: {
       show: false,
       nextPointCtrl: false,
@@ -1172,27 +1173,42 @@ export class AppComponent {
     });
   }
 
-  //Function added to activate remote control
+  //Function to toggle remote control panel
   public toggleRemoteControl() {
-    // Alterna o estado do controle remoto e salva a configuração
-    this.app.config.selections.remoteControl = !this.app.config.selections.remoteControl;
+    // Toggle the remote control panel display
+    this.display.remoteControl = !this.display.remoteControl;
+    
+    console.log(`Remote control display toggled to: ${this.display.remoteControl}`);
+    
+    // Also toggle the saved configuration state
+    this.app.config.selections.remoteControl = this.display.remoteControl;
     this.app.saveConfig(); 
-  
-    // Define a mensagem baseada no novo valor
-    const message = this.app.config.selections.remoteControl 
+    
+    // Define message based on new value
+    const message = this.display.remoteControl 
       ? "CONTROLE_MANUAL=true" 
       : "CONTROLE_MANUAL=false";
   
-    // Verifica se a conexão MOOS-IvP está ativa antes de enviar
+    // Check if MOOS-IvP connection is active before sending
     if (
       this.app.data.moosIvPServer &&
       this.app.data.moosIvPServer.socket &&
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
+      console.log(`Sending MOOS-IvP message: ${message}`);
       this.app.data.moosIvPServer.socket.send(message);
     } else {
-      console.warn("Conexão MOOS-IvP não estabelecida ou não está aberta!");
+      console.warn("MOOS-IvP connection not established or not open!");
     }
+    
+    // Log all the state for debugging
+    console.log("Current app state:", {
+      remoteControlDisplay: this.display.remoteControl,
+      remoteControlConfig: this.app.config.selections.remoteControl,
+      allDisplays: this.display
+    });
+    
+    this.focusMap();
   }
   
   
