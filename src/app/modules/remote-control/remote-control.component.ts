@@ -6,7 +6,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { AppFacade } from 'src/app/app.facade';
-import { TextDialComponent, TTGDialComponent } from 'src/app/lib/components/dial-text';
 
 @Component({
   selector: 'remote-control',
@@ -17,9 +16,7 @@ import { TextDialComponent, TTGDialComponent } from 'src/app/lib/components/dial
     MatButtonModule,
     MatCardModule,
     MatIconModule,
-    MatSliderModule,
-    TextDialComponent,
-    TTGDialComponent
+    MatSliderModule
   ],
   template: `
     <div class="remote-control-sidebar">
@@ -35,54 +32,28 @@ import { TextDialComponent, TTGDialComponent } from 'src/app/lib/components/dial
         <div class="nav-data-header">Navigation Data</div>
         
         <div class="navigation-data">
-          <!-- Display navigation data similarly to navdataPanel -->
           <div class="nav-data-row">
             <!-- Course Over Ground -->
-            @if(navData?.bearing?.value) {
-              <ap-dial-text
-                [title]="'COG'"
-                [value]="navData.bearing.value.toFixed(1)"
-                [units]="navData.bearing.type === 'M' ? 'deg (M)' : 'deg (T)'"
-              ></ap-dial-text>
-            }
+            <div class="data-box">
+              <div class="data-title">COG</div>
+              <div class="data-value">{{(app.data.vessels.self.cogTrue * 180 / Math.PI).toFixed(1)}}</div>
+              <div class="data-units">deg (T)</div>
+            </div>
             
             <!-- Speed Over Ground -->
-            @if(navData?.vmg) {
-              <ap-dial-text
-                [title]="'SOG'"
-                [value]="app.formatSpeed(navData.vmg, true)"
-                [units]="app.formattedSpeedUnits"
-              ></ap-dial-text>
-            }
+            <div class="data-box">
+              <div class="data-title">SOG</div>
+              <div class="data-value">{{app.formatSpeed(app.data.vessels.self.sog, true)}}</div>
+              <div class="data-units">{{app.formattedSpeedUnits}}</div>
+            </div>
           </div>
           
           <div class="nav-data-row">
             <!-- Position -->
-            @if(navData?.position) {
-              <ap-dial-text
-                [title]="'Position'"
-                [value]="formatPosition(navData.position)"
-                [units]="''"
-              ></ap-dial-text>
-            }
-          </div>
-          
-          <div class="nav-data-row">
-            <!-- Distance To Go -->
-            @if(navData?.dtg) {
-              <ap-dial-text
-                [title]="'DTG'"
-                [value]="navData.dtg.toFixed(1)"
-                [units]="app.config.units.distance === 'm' ? 'km' : 'NM'"
-              ></ap-dial-text>
-            }
-            
-            <!-- Time To Go -->
-            @if(navData?.ttg) {
-              <ap-dial-ttg
-                [value]="navData.ttg"
-              ></ap-dial-ttg>
-            }
+            <div class="data-box position-box">
+              <div class="data-title">Position</div>
+              <div class="data-value">{{formatPosition(app.data.vessels.self.position)}}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -173,27 +144,68 @@ import { TextDialComponent, TTGDialComponent } from 'src/app/lib/components/dial
     
     /* Navigation data section */
     .nav-data-section {
-      padding: 10px;
-      border-bottom: 1px solid #3a536c;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-color: #345270;
+      border-radius: 8px;
+      border: 1px solid #456789;
+      margin: 15px;
     }
     
     .nav-data-header {
       font-size: 14pt;
       font-weight: 500;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
       text-align: center;
+      color: #ddd;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     
     .navigation-data {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 15px;
     }
     
     .nav-data-row {
       display: flex;
       justify-content: space-around;
       flex-wrap: wrap;
+      padding: 5px 0;
+      border-radius: 4px;
+    }
+    
+    .data-box {
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .position-box {
+      flex: 2;
+      width: 100%;
+    }
+    
+    .data-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+    
+    .data-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    .data-units {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 2px;
     }
     
     /* Control panel section */
@@ -331,6 +343,9 @@ export class RemoteControlComponent {
   thrust = 0;   // 0% to 100%
   gear: 'forward' | 'neutral' | 'reverse' = 'neutral';
 
+  // Make Math available in the template
+  Math: any = Math;
+  
   constructor(
     public app: AppFacade
   ) {}
