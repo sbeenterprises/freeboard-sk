@@ -48,10 +48,20 @@ import { ThemePalette } from '@angular/material/core';
           
           <div class="control-section">
             <label>Thrust: {{thrust}}%</label>
-            <div class="vertical-slider-container">
-              <span class="limit-label">100%</span>
-              <input class="slider vertical" type="range" min="0" max="100" [(ngModel)]="thrust" (change)="sendThrustCommand(thrust)" orient="vertical">
-              <span class="limit-label">0%</span>
+            <div class="thrust-control-container">
+              <div class="vertical-slider-container">
+                <span class="limit-label">100%</span>
+                <input class="slider vertical" type="range" min="0" max="100" [(ngModel)]="thrust" (change)="sendThrustCommand(thrust)" orient="vertical">
+                <span class="limit-label">0%</span>
+              </div>
+              <div class="thrust-buttons">
+                <button mat-mini-fab class="thrust-button" (click)="increaseThrust()" [disabled]="thrust >= 100">
+                  <mat-icon>add</mat-icon>
+                </button>
+                <button mat-mini-fab class="thrust-button" (click)="decreaseThrust()" [disabled]="thrust <= 0">
+                  <mat-icon>remove</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -131,11 +141,32 @@ import { ThemePalette } from '@angular/material/core';
       gap: 10px;
     }
     
+    .thrust-control-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+    
     .vertical-slider-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       height: 150px;
+    }
+    
+    .thrust-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .thrust-button {
+      background-color: #1e2d3e;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      width: 36px;
+      height: 36px;
     }
     
     .limit-label {
@@ -252,6 +283,20 @@ export class RemoteControlComponent {
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
       this.app.data.moosIvPServer.socket.send(`DESIRED_GEAR=${gearValue}`);
+    }
+  }
+
+  increaseThrust() {
+    if (this.thrust < 100) {
+      this.thrust += 1;
+      this.sendThrustCommand(this.thrust);
+    }
+  }
+
+  decreaseThrust() {
+    if (this.thrust > 0) {
+      this.thrust -= 1;
+      this.sendThrustCommand(this.thrust);
     }
   }
 
