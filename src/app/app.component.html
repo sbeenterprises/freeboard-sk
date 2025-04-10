@@ -231,11 +231,11 @@
           mode="side"
           position="end"
           (openedChange)="rightSideNavAction($event)"
-          style="width: 350px"
+          style="width: 350px; transition: transform 300ms ease-in-out;"
         >
-          <!-- Show normal instrument panel layout when remote control is not active -->
-          @if(!display.remoteControl) {
+          <!-- Instruments Panel Layout -->
           <div
+            *ngIf="!display.remoteControl && !isAnimatingRemoteControl"
             style="display: flex; flex-direction: column; position: relative"
           >
             <mat-nav-list>
@@ -300,18 +300,17 @@
               }
             </div>
           </div>
-          }
           
-          <!-- Show remote control panel with full side panel space when active -->
-          @if(display.remoteControl) {
-          <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+          <!-- Remote Control Panel Layout - Display during both active state and animation -->
+          <div 
+            *ngIf="display.remoteControl || isAnimatingRemoteControl"
+            style="width: 100%; height: 100%; display: flex; flex-direction: column;">
             <remote-control
               [navData]="app.data.navData"
               (closed)="toggleRemoteControl()"
               style="width: 100%; height: 100%;"
             ></remote-control>
           </div>
-          }
         </mat-sidenav>
         }
         <mat-sidenav-content style="overflow: hidden">

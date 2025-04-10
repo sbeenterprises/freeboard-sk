@@ -844,7 +844,8 @@ export class AppComponent {
     }
     
     // If the panel is closed, also turn off remote control
-    if (!e) {
+    // but only if we're not in the middle of an animation
+    if (!e && !this.isAnimating && !this.isAnimatingRemoteControl) {
       if (this.display.remoteControl) {
         this.display.remoteControl = false;
         this.app.config.selections.remoteControl = false;
@@ -1194,8 +1195,21 @@ export class AppComponent {
     });
   }
 
+  // Animation tracking variables
+  private isAnimating = false;
+  public isAnimatingRemoteControl = false; // exposed to template
+  private animationDelay = 300; // ms - should match the CSS transition time
+  
   //Function to toggle remote control panel
   public toggleRemoteControl() {
+    // Check if we're in the middle of an animation
+    if (this.isAnimating) {
+      return;
+    }
+    
+    // Get current state before toggle
+    const wasActive = this.display.remoteControl;
+    
     // Toggle the remote control panel display
     this.display.remoteControl = !this.display.remoteControl;
     
@@ -1231,10 +1245,23 @@ export class AppComponent {
       if (this.sideright && !this.sideright.opened) {
         this.sideright.open();
       }
-    } else {
-      // When deactivating remote control, ALWAYS close the sidenav
+    } else if (wasActive) {
+      // Only when deactivating remote control (not during initialization)
+      
+      // Set animation flags to prevent double-toggling and keep component visible
+      this.isAnimating = true;
+      this.isAnimatingRemoteControl = true;
+      
+      // Keep the remote control visible while the animation runs
+      // but begin the sidenav closing animation
       if (this.sideright && this.sideright.opened) {
         this.sideright.close();
+        
+        // After animation completes, reset the animation flags
+        setTimeout(() => {
+          this.isAnimating = false;
+          this.isAnimatingRemoteControl = false;
+        }, this.animationDelay);
       }
     }
     
