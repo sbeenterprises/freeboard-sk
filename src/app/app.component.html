@@ -224,7 +224,7 @@
     <!-- content -->
     <div class="view" theme-main>
       <mat-sidenav-container hasBackdrop="false">
-        <!--instruments-->
+        <!-- Single shared sidenav for both Instruments and Remote Control -->
         @if(app.data.optAppPanel) {
         <mat-sidenav
           #sideright
@@ -233,6 +233,8 @@
           (openedChange)="rightSideNavAction($event)"
           style="width: 350px"
         >
+          <!-- Show normal instrument panel layout when remote control is not active -->
+          @if(!display.remoteControl) {
           <div
             style="display: flex; flex-direction: column; position: relative"
           >
@@ -287,6 +289,7 @@
                 -webkit-overfow-scrolling: touch;
               "
             >
+              <!-- Show instruments when active -->
               @if(display.instrumentAppActive) {
               <iframe
                 [src]="instUrl"
@@ -297,6 +300,18 @@
               }
             </div>
           </div>
+          }
+          
+          <!-- Show remote control panel with full side panel space when active -->
+          @if(display.remoteControl) {
+          <div style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+            <remote-control
+              [navData]="app.data.navData"
+              (closed)="toggleRemoteControl()"
+              style="width: 100%; height: 100%;"
+            ></remote-control>
+          </div>
+          }
         </mat-sidenav>
         }
         <mat-sidenav-content style="overflow: hidden">
@@ -898,12 +913,7 @@
           ></alert-list>
           }
           
-          <!-- Remote Control Panel -->
-          <div class="remote-control-panel" *ngIf="display.remoteControl">
-            <remote-control
-              (closed)="display.remoteControl = false"
-            ></remote-control>
-          </div>
+          <!-- Remote Control Panel is now displayed in the right side panel -->
           <div class="alarmPanel">
             @for(n of notiMgr.alerts(); track n[0]) {
             <span style="margin-bottom: 5px">

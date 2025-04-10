@@ -78,6 +78,7 @@ interface DrawEndEvent {
 })
 export class AppComponent {
   @ViewChild('sideright', { static: false }) sideright;
+  @ViewChild('remoteControlSidenav', { static: false }) remoteControlSidenav;
 
   public display = {
     fullscreen: { active: false, enabled: document.fullscreenEnabled },
@@ -818,7 +819,8 @@ export class AppComponent {
         this.display.instrumentAppActive = false;
       }
     } else {
-      this.display.instrumentAppActive = true;
+      // Only set instrumentAppActive to true if remote control is not active
+      this.display.instrumentAppActive = !this.display.remoteControl;
     }
   }
 
@@ -835,12 +837,31 @@ export class AppComponent {
 
   public rightSideNavAction(e: boolean) {
     this.display.instrumentPanelOpen = e;
+    
+    // Handle instrument panel
     if (this.app.config.plugins.startOnOpen) {
       this.display.instrumentAppActive = e;
     }
+    
+    // If the panel is closed, also turn off remote control
     if (!e) {
+      if (this.display.remoteControl) {
+        this.display.remoteControl = false;
+        this.app.config.selections.remoteControl = false;
+        this.app.saveConfig();
+        
+        // Send CONTROLE_MANUAL=false when closing the panel
+        if (
+          this.app.data.moosIvPServer &&
+          this.app.data.moosIvPServer.socket &&
+          this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+        ) {
+          this.app.data.moosIvPServer.socket.send("CONTROLE_MANUAL=false");
+        }
+      }
+      
       this.focusMap();
-    } // set when closed
+    }
   }
 
   public displayLeftMenu(menulist = '', show = false) {
@@ -1199,6 +1220,22 @@ export class AppComponent {
       this.app.data.moosIvPServer.socket.send(message);
     } else {
       console.warn("MOOS-IvP connection not established or not open!");
+    }
+    
+    // Manage sidenav behavior for remote control
+    if (this.display.remoteControl) {
+      // When activating remote control, turn off instruments display
+      this.display.instrumentAppActive = false;
+      
+      // Make sure sidenav is open
+      if (this.sideright && !this.sideright.opened) {
+        this.sideright.open();
+      }
+    } else {
+      // When deactivating remote control, ALWAYS close the sidenav
+      if (this.sideright && this.sideright.opened) {
+        this.sideright.close();
+      }
     }
     
     // Log all the state for debugging
