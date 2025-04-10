@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { AppFacade } from 'src/app/app.facade';
+import { ThemePalette } from '@angular/material/core';
 
 @Component({
   selector: 'remote-control',
@@ -57,9 +58,18 @@ import { AppFacade } from 'src/app/app.facade';
           <div class="control-section">
             <label>Gear: {{gear}}</label>
             <div class="button-group">
-              <button class="gear-button" mat-raised-button [color]="gear === 'forward' ? 'primary' : ''" (click)="setGear('forward')">Forward</button>
-              <button class="gear-button" mat-raised-button [color]="gear === 'neutral' ? 'primary' : ''" (click)="setGear('neutral')">Neutral</button>
-              <button class="gear-button" mat-raised-button [color]="gear === 'reverse' ? 'primary' : ''" (click)="setGear('reverse')">Reverse</button>
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'forward'}" 
+                      (click)="setGear('forward')">Forward</button>
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'neutral'}" 
+                      (click)="setGear('neutral')">Neutral</button>
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'reverse'}" 
+                      (click)="setGear('reverse')">Reverse</button>
             </div>
           </div>
         </mat-card-content>
@@ -172,6 +182,25 @@ import { AppFacade } from 'src/app/app.facade';
     .button-group {
       display: flex;
       flex-direction: column;
+    }
+    
+    /* Green button style for selected gear */
+    .green-gear-button {
+      background-color: #4CAF50 !important;
+      color: white !important;
+      border-color: #4CAF50 !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .green-gear-button:hover {
+      background-color: #45a049 !important;
+      color: white !important;
+    }
+    
+    /* Override Angular Material styles with higher specificity */
+    .control-section .button-group button.gear-button.green-gear-button {
+      background-color: #4CAF50 !important;
+      color: white !important;
     }
   `]
 })
