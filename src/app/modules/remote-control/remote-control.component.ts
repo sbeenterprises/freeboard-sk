@@ -527,20 +527,19 @@ export class RemoteControlComponent implements OnInit {
       this.app.data.moosIvPServer.socket &&
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
-      // Convert waypoints to the format expected by MOOS-IvP
-      // Each waypoint is an [lon, lat] array
-      const waypointData = waypoints.map((point, index) => {
-        return {
-          index,
-          lon: point[0],
-          lat: point[1]
-        };
-      });
+      // Format waypoints as lat1,lon1:lat2,lon2:lat3,lon3...
+      // Note that waypoints in SignalK are stored as [longitude, latitude]
+      // but we need to send as latitude,longitude format
+      const waypointString = waypoints.map(point => {
+        // Extract lat and lon from the point and format
+        const lat = point[1]; // Latitude is at index 1
+        const lon = point[0]; // Longitude is at index 0
+        return `${lat},${lon}`;
+      }).join(':');
       
-      // Send the waypoints data as JSON string
-      const waypointsString = JSON.stringify(waypointData);
-      this.app.data.moosIvPServer.socket.send(`AUTONOMOUS_WAYPOINTS=${waypointsString}`);
-      console.log('Sent waypoints to MOOS-IvP:', waypointData);
+      // Send the formatted waypoint string
+      this.app.data.moosIvPServer.socket.send(`AUTONOMOUS_WAYPOINTS=${waypointString}`);
+      console.log('Sent waypoints to MOOS-IvP:', waypointString);
     } else {
       console.error('MOOS-IvP connection not available');
     }
