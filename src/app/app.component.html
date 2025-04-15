@@ -235,7 +235,7 @@
         >
           <!-- Instruments Panel Layout -->
           <div
-            *ngIf="!display.remoteControl && !isAnimatingRemoteControl"
+            *ngIf="!display.remoteControl && !isAnimatingRemoteControl && !app.config.selections.autonomousControl"
             style="display: flex; flex-direction: column; position: relative"
           >
             <mat-nav-list>
@@ -289,8 +289,8 @@
                 -webkit-overfow-scrolling: touch;
               "
             >
-              <!-- Show instruments when active -->
-              @if(display.instrumentAppActive) {
+              <!-- Show instruments when active and no control panel is active -->
+              @if(display.instrumentAppActive && !display.remoteControl && !app.config.selections.autonomousControl) {
               <iframe
                 [src]="instUrl"
                 style="width: 345px; height: 100%"
@@ -301,13 +301,14 @@
             </div>
           </div>
           
-          <!-- Remote Control Panel Layout - Display during both active state and animation -->
+          <!-- Control Panel Layout - Display during both active state and animation for Remote or Autonomous Control -->
           <div 
-            *ngIf="display.remoteControl || isAnimatingRemoteControl"
-            style="width: 100%; height: 100%; display: flex; flex-direction: column;">
+            *ngIf="display.remoteControl || isAnimatingRemoteControl || app.config.selections.autonomousControl"
+            style="width: 100%; height: 100%; display: flex; flex-direction: column;"
+            [ngClass]="{'autonomous-mode': app.config.selections.autonomousControl}">
             <remote-control
               [navData]="app.data.navData"
-              (closed)="toggleRemoteControl()"
+              (closed)="app.config.selections.remoteControl ? toggleRemoteControl() : toggleAutonomousControl()"
               style="width: 100%; height: 100%;"
             ></remote-control>
           </div>

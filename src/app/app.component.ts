@@ -1200,11 +1200,31 @@ export class AppComponent {
   public isAnimatingRemoteControl = false; // exposed to template
   private animationDelay = 300; // ms - should match the CSS transition time
   
+  // Helper method to check if any control panel is active
+  private get isAnyControlActive(): boolean {
+    return this.display.remoteControl || this.app.config.selections.autonomousControl || false;
+  }
+  
   //Function to toggle remote control panel
   public toggleRemoteControl() {
     // Check if we're in the middle of an animation
     if (this.isAnimating) {
       return;
+    }
+    
+    // If autonomous control is active, deactivate it first
+    if (this.app.config.selections.autonomousControl) {
+      this.app.config.selections.autonomousControl = false;
+      this.app.saveConfig();
+      
+      // Send AUTONOMOUS_CONTROL=false message to MOOS-IvP server
+      if (
+        this.app.data.moosIvPServer &&
+        this.app.data.moosIvPServer.socket &&
+        this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+      ) {
+        this.app.data.moosIvPServer.socket.send("AUTONOMOUS_CONTROL=false");
+      }
     }
     
     // Get current state before toggle
@@ -1265,29 +1285,29 @@ export class AppComponent {
       }
     }
     
-    // Log all the state for debugging
-    console.log("Current app state:", {
-      remoteControlDisplay: this.display.remoteControl,
-      remoteControlConfig: this.app.config.selections.remoteControl,
-      allDisplays: this.display
-    });
-    
     this.focusMap();
   }
   
   
-   //Function added to activate autonomous control
+   //Function to toggle autonomous control
    public toggleAutonomousControl() {
-    // Alterna o estado do controle autônomo e salva a configuração
+    // If remote control is currently active, deactivate it first to prevent conflicts
+    if (this.display.remoteControl) {
+      this.toggleRemoteControl();
+    }
+    
+    const wasActive = this.app.config.selections.autonomousControl;
+    
+    // Toggle autonomous control state and save configuration
     this.app.config.selections.autonomousControl = !this.app.config.selections.autonomousControl;
     this.app.saveConfig();
   
-    // Define a mensagem baseada no novo valor
+    // Define the message based on the new value
     const message = this.app.config.selections.autonomousControl 
       ? "AUTONOMOUS_CONTROL=true" 
       : "AUTONOMOUS_CONTROL=false";
   
-    // Verifica se a conexão MOOS-IvP está ativa antes de enviar
+    // Check if MOOS-IvP connection is active before sending
     if (
       this.app.data.moosIvPServer &&
       this.app.data.moosIvPServer.socket &&
@@ -1295,8 +1315,46 @@ export class AppComponent {
     ) {
       this.app.data.moosIvPServer.socket.send(message);
     } else {
-      console.warn("Conexão MOOS-IvP não estabelecida ou não está aberta!");
+      console.warn("MOOS-IvP connection not established or not open!");
     }
+    
+    // When activating autonomous control, disable instrument panel and open the side panel
+    if (this.app.config.selections.autonomousControl) {
+      // Turn off instruments display to prevent it from showing
+      this.display.instrumentAppActive = false;
+      
+      if (this.sideright && !this.sideright.opened) {
+        this.sideright.open();
+      }
+    } else if (!this.display.remoteControl && wasActive) {
+      // We're animating the closing of autonomous control
+      this.isAnimatingRemoteControl = true;
+      
+      // If we're turning off autonomous control and remote control is not active, close panel
+      if (this.sideright && this.sideright.opened) {
+        this.sideright.close();
+      }
+      
+      // Reset animation state and instrument panel state after animation completes
+      setTimeout(() => {
+        this.isAnimatingRemoteControl = false;
+        
+        // Only restore instruments if no control panel is active
+        if (!this.display.remoteControl && !this.app.config.selections.autonomousControl) {
+          this.display.instrumentAppActive = true;
+        }
+      }, this.animationDelay + 100);
+    }
+    
+    // Set animation state for autonomous control
+    if (!this.app.config.selections.autonomousControl && wasActive) {
+      this.isAnimating = true;
+      setTimeout(() => {
+        this.isAnimating = false;
+      }, this.animationDelay);
+    }
+    
+    this.focusMap();
   }
   
 

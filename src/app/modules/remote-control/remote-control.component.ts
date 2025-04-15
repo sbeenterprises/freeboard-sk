@@ -1,11 +1,13 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
+import { MatSelectModule } from '@angular/material/select';
 import { AppFacade } from 'src/app/app.facade';
+import { SKResources } from 'src/app/modules/skresources/resources.service';
 
 @Component({
   selector: 'remote-control',
@@ -16,15 +18,18 @@ import { AppFacade } from 'src/app/app.facade';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
-    MatSliderModule
+    MatSliderModule,
+    MatSelectModule
   ],
   template: `
-    <div class="remote-control-sidebar">
-      <div class="sidebar-header">
-        <span class="title">Remote Control</span>
-        <button mat-icon-button (click)="closePanel()" matTooltip="Close panel">
-          <mat-icon>close</mat-icon>
-        </button>
+    <div class="remote-control-sidebar" [class.autonomous-sidebar]="isAutonomous">
+      <div class="sidebar-header" [class.autonomous-header]="isAutonomous">
+        <span class="title">{{ isAutonomous ? 'Autonomous Control' : 'Remote Control' }}</span>
+        <div>
+          <button mat-icon-button (click)="closePanel()" matTooltip="Close panel">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
       </div>
       
       <!-- Navigation Data Section -->
@@ -58,53 +63,109 @@ import { AppFacade } from 'src/app/app.facade';
         </div>
       </div>
       
-      <!-- Remote Control Section -->
+      <!-- Control Section -->
       <div class="control-panel">
-        <div class="control-section">
-          <label>Rudder: {{rudder}}°</label>
-          <div class="horizontal-slider-container">
-            <span class="limit-label">-30°</span>
-            <input class="slider horizontal" type="range" min="-30" max="30" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
-            <span class="limit-label">30°</span>
-          </div>
-        </div>
-        
-        <div class="control-section">
-          <label>Thrust: {{thrust}}%</label>
-          <div class="thrust-control-container">
-            <div class="vertical-slider-container">
-              <span class="limit-label">100%</span>
-              <input class="slider vertical" type="range" min="0" max="100" [(ngModel)]="thrust" (change)="sendThrustCommand(thrust)" orient="vertical">
-              <span class="limit-label">0%</span>
-            </div>
-            <div class="thrust-buttons">
-              <button mat-mini-fab class="thrust-button" (click)="increaseThrust()" [disabled]="thrust >= 100">
-                <mat-icon>add</mat-icon>
-              </button>
-              <button mat-mini-fab class="thrust-button" (click)="decreaseThrust()" [disabled]="thrust <= 0">
-                <mat-icon>remove</mat-icon>
-              </button>
+        <!-- Remote Control Section (shown only in remote control mode) -->
+        <ng-container *ngIf="!isAutonomous">
+          <div class="control-section">
+            <label>Rudder: {{rudder}}°</label>
+            <div class="horizontal-slider-container">
+              <span class="limit-label">-30°</span>
+              <input class="slider horizontal" type="range" min="-30" max="30" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
+              <span class="limit-label">30°</span>
             </div>
           </div>
-        </div>
-        
-        <div class="control-section">
-          <label>Gear: {{gear}}</label>
-          <div class="button-group">
-            <button class="gear-button" 
-                    mat-raised-button 
-                    [ngClass]="{'green-gear-button': gear === 'forward'}" 
-                    (click)="setGear('forward')">Forward</button>
-            <button class="gear-button" 
-                    mat-raised-button 
-                    [ngClass]="{'green-gear-button': gear === 'neutral'}" 
-                    (click)="setGear('neutral')">Neutral</button>
-            <button class="gear-button" 
-                    mat-raised-button 
-                    [ngClass]="{'green-gear-button': gear === 'reverse'}" 
-                    (click)="setGear('reverse')">Reverse</button>
+          
+          <div class="control-section">
+            <label>Thrust: {{thrust}}%</label>
+            <div class="thrust-control-container">
+              <div class="vertical-slider-container">
+                <span class="limit-label">100%</span>
+                <input class="slider vertical" type="range" min="0" max="100" [(ngModel)]="thrust" (change)="sendThrustCommand(thrust)" orient="vertical">
+                <span class="limit-label">0%</span>
+              </div>
+              <div class="thrust-buttons">
+                <button mat-mini-fab class="thrust-button" (click)="increaseThrust()" [disabled]="thrust >= 100">
+                  <mat-icon>add</mat-icon>
+                </button>
+                <button mat-mini-fab class="thrust-button" (click)="decreaseThrust()" [disabled]="thrust <= 0">
+                  <mat-icon>remove</mat-icon>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+          
+          <div class="control-section">
+            <label>Gear: {{gear}}</label>
+            <div class="button-group">
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'forward'}" 
+                      (click)="setGear('forward')">Forward</button>
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'neutral'}" 
+                      (click)="setGear('neutral')">Neutral</button>
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': gear === 'reverse'}" 
+                      (click)="setGear('reverse')">Reverse</button>
+            </div>
+          </div>
+        </ng-container>
+        
+        <!-- Autonomous Control Section (shown only in autonomous control mode) -->
+        <ng-container *ngIf="isAutonomous">
+          <div class="control-section">
+            <label>Route Selection</label>
+            <div class="route-select-container">
+              <mat-form-field appearance="fill" class="route-select">
+                <mat-label>Select a route</mat-label>
+                <mat-select [(ngModel)]="selectedRouteId" (selectionChange)="onRouteSelected()">
+                  <mat-option *ngFor="let route of availableRoutes" [value]="route.id">
+                    {{route.name}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="control-section">
+            <label>Thrust: {{thrust}}%</label>
+            <div class="thrust-control-container">
+              <div class="vertical-slider-container">
+                <span class="limit-label">100%</span>
+                <input class="slider vertical" type="range" min="0" max="100" [(ngModel)]="thrust" (change)="sendThrustCommand(thrust)" orient="vertical">
+                <span class="limit-label">0%</span>
+              </div>
+              <div class="thrust-buttons">
+                <button mat-mini-fab class="thrust-button" (click)="increaseThrust()" [disabled]="thrust >= 100">
+                  <mat-icon>add</mat-icon>
+                </button>
+                <button mat-mini-fab class="thrust-button" (click)="decreaseThrust()" [disabled]="thrust <= 0">
+                  <mat-icon>remove</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="control-section">
+            <div class="autonomous-buttons">
+              <button mat-raised-button class="autonomous-button" [ngClass]="{'green-button': autonomyStarted}" [color]="autonomyStarted ? '' : 'primary'" (click)="sendAutonomousCommand('start')">
+                <mat-icon>play_arrow</mat-icon> Start
+              </button>
+              <button mat-raised-button class="autonomous-button" [ngClass]="{'green-button': autonomyStopped}" [color]="autonomyStopped ? '' : 'warn'" (click)="sendAutonomousCommand('stop')">
+                <mat-icon>stop</mat-icon> Stop
+              </button>
+              <button mat-raised-button class="autonomous-button" (click)="sendAutonomousCommand('clear')">
+                <mat-icon>clear_all</mat-icon> Clear Path
+              </button>
+              <button mat-raised-button class="autonomous-button" [ngClass]="{'green-button': returnToBaseActive}" [color]="returnToBaseActive ? '' : 'accent'" (click)="sendAutonomousCommand('return')">
+                <mat-icon>home</mat-icon> Return to Base
+              </button>
+            </div>
+          </div>
+        </ng-container>
       </div>
     </div>
   `,
@@ -126,6 +187,7 @@ import { AppFacade } from 'src/app/app.facade';
       flex-direction: column;
       background-color: #2a3f55;
       color: white;
+      padding-top: 0;
     }
     
     .sidebar-header {
@@ -135,6 +197,21 @@ import { AppFacade } from 'src/app/app.facade';
       padding: 10px 15px;
       background-color: #1e2d3e;
       border-bottom: 1px solid #3a536c;
+    }
+    
+    /* Adjusted styles for autonomous mode */
+    :host-context(.autonomous-mode) .remote-control-sidebar {
+      padding-top: 0;
+    }
+    
+    .autonomous-sidebar {
+      padding-top: 0 !important;
+    }
+    
+    .autonomous-header {
+      display: flex !important;
+      justify-content: space-between;
+      padding-left: 20px;
     }
     
     .sidebar-header .title {
@@ -150,6 +227,10 @@ import { AppFacade } from 'src/app/app.facade';
       border-radius: 8px;
       border: 1px solid #456789;
       margin: 15px;
+    }
+    
+    .autonomous-sidebar .nav-data-section {
+      margin-top: 0;
     }
     
     .nav-data-header {
@@ -328,27 +409,142 @@ import { AppFacade } from 'src/app/app.facade';
       color: white !important;
     }
     
+    /* Autonomous control styles */
+    .autonomous-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .autonomous-button {
+      height: 45px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .autonomous-button mat-icon {
+      margin-right: 8px;
+    }
+
+    .route-select-container {
+      padding: 0 10px;
+    }
+
+    .route-select {
+      width: 100%;
+    }
+    
     /* Override Angular Material styles with higher specificity */
     .control-section .button-group button.gear-button.green-gear-button {
       background-color: #4CAF50 !important;
       color: white !important;
     }
+    
+    .green-button {
+      background-color: #4CAF50 !important;
+      color: white !important;
+    }
   `]
 })
-export class RemoteControlComponent {
+export class RemoteControlComponent implements OnInit {
   @Input() navData: any;
   @Output() closed = new EventEmitter<void>();
 
   rudder = 0;   // Degrees, -30 to +30
   thrust = 0;   // 0% to 100%
   gear: 'forward' | 'neutral' | 'reverse' = 'neutral';
+  autonomyStarted = false;
+  autonomyStopped = false;
+  returnToBaseActive = false;
+  selectedRouteId: string = '';
+  availableRoutes: any[] = [];
+
+  // Determine if we're in autonomous mode based on app configuration
+  get isAutonomous(): boolean {
+    return this.app.config.selections.autonomousControl || false;
+  }
 
   // Make Math available in the template
   Math: any = Math;
   
   constructor(
-    public app: AppFacade
+    public app: AppFacade,
+    private skResources: SKResources
   ) {}
+
+  ngOnInit() {
+    // Force a refresh of routes when the component initializes
+    this.skResources.getRoutes();
+    // Set up a subscription to route updates
+    this.skResources.update$().subscribe(update => {
+      if (update && update['mode'] === 'route') {
+        this.loadRoutes();
+      }
+    });
+    // Initial load with a slight delay to ensure routes are fetched
+    setTimeout(() => this.loadRoutes(), 500);
+  }
+
+  loadRoutes() {
+    console.log('Loading routes into dropdown...');
+    // Get available routes from app.data.routes
+    if (this.app.data.routes && this.app.data.routes.length > 0) {
+      this.availableRoutes = this.app.data.routes.map(route => ({
+        id: route[0],
+        name: route[1].name || 'Unnamed Route',
+        description: route[1].description
+      }));
+      console.log(`Loaded ${this.availableRoutes.length} routes`);
+    } else {
+      console.log('No routes available');
+      this.availableRoutes = [];
+      // Trigger another get routes attempt
+      this.skResources.getRoutes();
+    }
+  }
+  
+  onRouteSelected() {
+    if (this.selectedRouteId) {
+      console.log(`Route selected: ${this.selectedRouteId}`);
+      
+      // Find the selected route
+      const route = this.app.data.routes.find(r => r[0] === this.selectedRouteId);
+      
+      if (route && route[1] && route[1].feature && route[1].feature.geometry && route[1].feature.geometry.coordinates) {
+        const waypoints = route[1].feature.geometry.coordinates;
+        
+        // Send waypoints to MOOS-IvP
+        this.sendWaypointsToMOOS(waypoints);
+      } else {
+        console.error('Route coordinates not found');
+      }
+    }
+  }
+  
+  sendWaypointsToMOOS(waypoints: any[]) {
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      // Convert waypoints to the format expected by MOOS-IvP
+      // Each waypoint is an [lon, lat] array
+      const waypointData = waypoints.map((point, index) => {
+        return {
+          index,
+          lon: point[0],
+          lat: point[1]
+        };
+      });
+      
+      // Send the waypoints data as JSON string
+      const waypointsString = JSON.stringify(waypointData);
+      this.app.data.moosIvPServer.socket.send(`AUTONOMOUS_WAYPOINTS=${waypointsString}`);
+      console.log('Sent waypoints to MOOS-IvP:', waypointData);
+    } else {
+      console.error('MOOS-IvP connection not available');
+    }
+  }
 
   sendRudderCommand(value: number) {
     console.log(`Sending rudder command: ${value}`);
@@ -404,6 +600,55 @@ export class RemoteControlComponent {
     }
   }
 
+  sendAutonomousCommand(command: 'start' | 'stop' | 'clear' | 'return') {
+    console.log(`Sending autonomous command: ${command}`);
+    
+    let moosCommand = '';
+    
+    switch(command) {
+      case 'start':
+        // Make sure a route is selected before starting
+        if (!this.selectedRouteId && !this.autonomyStarted) {
+          console.warn('No route selected, cannot start autonomous navigation');
+          this.app.showAlert('Please select a route first', 'No Route Selected');
+          return;
+        }
+        
+        this.autonomyStarted = !this.autonomyStarted;
+        if (this.autonomyStarted) {
+          this.autonomyStopped = false;
+        }
+        moosCommand = 'AUTONOMOUS_START=true';
+        break;
+      case 'stop':
+        this.autonomyStarted = false;
+        this.autonomyStopped = !this.autonomyStopped;
+        moosCommand = 'AUTONOMOUS_STOP=true';
+        break;
+      case 'clear':
+        this.autonomyStarted = false;
+        this.autonomyStopped = false;
+        this.returnToBaseActive = false;
+        // Clear the selected route when clearing the path
+        this.selectedRouteId = '';
+        moosCommand = 'AUTONOMOUS_CLEAR_PATH=true';
+        break;
+      case 'return':
+        this.returnToBaseActive = !this.returnToBaseActive;
+        moosCommand = this.returnToBaseActive ? 'AUTONOMOUS_RETURN_TO_BASE=true' : 'AUTONOMOUS_RETURN_TO_BASE=false';
+        break;
+    }
+    
+    if (
+      moosCommand &&
+      this.app.data.moosIvPServer && 
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      this.app.data.moosIvPServer.socket.send(moosCommand);
+    }
+  }
+
   // Format position for display
   formatPosition(position: any): string {
     if (!position || !position[0] || !position[1]) {
@@ -416,20 +661,42 @@ export class RemoteControlComponent {
   }
 
   closePanel() {
-    console.log("Closing remote control panel");
+    console.log("Closing control panel");
     
-    // Send CONTROLE_MANUAL=false when closing the panel
-    if (
-      this.app.data.moosIvPServer &&
-      this.app.data.moosIvPServer.socket &&
-      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
-    ) {
-      console.log("Sending CONTROLE_MANUAL=false to MOOS-IvP");
-      this.app.data.moosIvPServer.socket.send("CONTROLE_MANUAL=false");
+    if (this.isAutonomous) {
+      // If closing autonomous control panel
+      if (
+        this.app.data.moosIvPServer &&
+        this.app.data.moosIvPServer.socket &&
+        this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+      ) {
+        console.log("Sending AUTONOMOUS_CONTROL=false to MOOS-IvP");
+        this.app.data.moosIvPServer.socket.send("AUTONOMOUS_CONTROL=false");
+      }
+      
+      // Reset autonomous control states
+      this.autonomyStarted = false;
+      this.autonomyStopped = false;
+      this.returnToBaseActive = false;
+      this.selectedRouteId = '';
+      
+      // Update the autonomous control button state
+      this.app.config.selections.autonomousControl = false;
+    } else {
+      // If closing remote control panel
+      if (
+        this.app.data.moosIvPServer &&
+        this.app.data.moosIvPServer.socket &&
+        this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+      ) {
+        console.log("Sending CONTROLE_MANUAL=false to MOOS-IvP");
+        this.app.data.moosIvPServer.socket.send("CONTROLE_MANUAL=false");
+      }
+      
+      // Update the remote control button state
+      this.app.config.selections.remoteControl = false;
     }
     
-    // Also update the button state
-    this.app.config.selections.remoteControl = false;
     this.app.saveConfig();
     
     // Emit close event to parent
