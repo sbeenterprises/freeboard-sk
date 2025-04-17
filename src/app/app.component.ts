@@ -5,6 +5,7 @@ import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { Observable, Subject } from 'rxjs';
+import { SKWaypoint } from './modules/skresources/resource-classes';
 
 import { AppFacade } from './app.facade';
 import { SettingsMessage } from './lib/services';
@@ -15,6 +16,7 @@ import {
   GeoJSONImportDialog,
   Trail2RouteDialog
 } from 'src/app/lib/components/dialogs';
+import { WaypointDialog } from './modules/skresources/components/waypoints/waypoint-dialog';
 
 import {
   AISPropertiesModal,
@@ -430,6 +432,60 @@ export class AppComponent {
       case 'weather_forecast':
         this.showWeather('forecast');
         break;
+      case 'setbase':
+        this.setAsBase(this.app.data.map.atClick.lonlat);
+        break;
+    }
+  }
+  
+  // ** Set the clicked location as the base point for MOOS-IvP **
+  public setAsBase(coordinates: Position) {
+    if (!coordinates || !coordinates[0] || !coordinates[1]) {
+      console.error('Invalid coordinates for base point');
+      return;
+    }
+    
+    const lat = coordinates[1];
+    const lon = coordinates[0];
+    
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      // Send the base point coordinates to MOOS-IvP
+      this.app.data.moosIvPServer.socket.send(`RETURN_UPDATE=points=${lat},${lon}`);
+      
+      // Show confirmation message
+      this.app.showMessage(`Base point set at ${lat.toFixed(4)}, ${lon.toFixed(4)}`, false, 3000);
+      
+      // Create a base point (home) marker
+      const baseWaypoint = new SKWaypoint();
+      baseWaypoint.feature.geometry.coordinates = coordinates;
+      baseWaypoint.name = "Base Point";
+      baseWaypoint.description = "Return to base location";
+      baseWaypoint.type = "home"; // Special type for home icon
+      
+      // Show waypoint editor with our pre-configured waypoint
+      this.dialog
+        .open(WaypointDialog, {
+          disableClose: true,
+          data: {
+            title: 'Base Point Location:',
+            addMode: true,
+            waypoint: baseWaypoint
+          }
+        })
+        .afterClosed()
+        .subscribe((r: { save: boolean; waypoint: SKWaypoint }) => {
+          if (r.save) {
+            // Create a new waypoint with home icon
+            const resId = this.signalk.uuid;
+            this.skres.putResource('waypoints', resId, r.waypoint, true);
+          }
+        });
+    } else {
+      this.app.showMessage('Unable to set base point: MOOS-IvP connection not available', false, 3000);
     }
   }
   // ** create route from vessel trail **

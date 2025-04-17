@@ -94,11 +94,17 @@ export const getResourceIcon = (
     }
     const icon =
       typeof resource === 'string' ? resource : (resource as SKWaypoint).type;
-    if (!icon || !['pseudoaton', 'whale', 'alarm-mob'].includes(icon)) {
+    if (!icon || !['pseudoaton', 'whale', 'alarm-mob', 'home'].includes(icon)) {
       return iconDef;
     }
     if (icon === 'pseudoaton') {
       iconDef.class = 'icon-warn';
+    } else if (icon === 'home') {
+      iconDef = {
+        class: undefined,
+        svgIcon: undefined,
+        name: 'home'
+      };
     } else {
       iconDef = {
         class: 'ob',

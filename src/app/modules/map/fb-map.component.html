@@ -604,6 +604,14 @@
       <mat-icon>near_me</mat-icon>
       Navigate to here
     </button>
+    <button
+      mat-menu-item
+      (click)="onContextMenuAction('setbase', item)"
+      (contextmenu)="$event.preventDefault()"
+    >
+      <mat-icon>home</mat-icon>
+      Set as Base
+    </button>
     @if(app.data.navData.position){
     <button
       mat-menu-item

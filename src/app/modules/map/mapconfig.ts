@@ -193,6 +193,17 @@ const pobIcon = new Icon({
   rotateWithView: false
 });
 
+// Create a home icon style
+const homeIcon = new Icon({
+  src: './assets/icons/home.png',  // Using an existing icon from the project
+  rotateWithView: false,
+  size: [72, 72],
+  scale: 0.4,
+  anchor: [36, 36],
+  anchorXUnits: 'pixels',
+  anchorYUnits: 'pixels'
+});
+
 export const waypointStyles = {
   default: new Style({
     image: wptIcon,
@@ -234,6 +245,13 @@ export const waypointStyles = {
     text: new Text({
       text: '',
       offsetY: -15
+    })
+  }),
+  home: new Style({
+    image: homeIcon,
+    text: new Text({
+      text: '',
+      offsetY: -30
     })
   })
 };
