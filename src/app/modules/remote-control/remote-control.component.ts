@@ -74,6 +74,7 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
               <input class="slider horizontal" type="range" min="-30" max="30" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
               <span class="limit-label">30°</span>
             </div>
+            <button mat-raised-button class="center-rudder-button" (click)="centerRudder()">Center Rudder</button>
           </div>
           
           <div class="control-section">
@@ -350,6 +351,13 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
       height: 36px;
     }
     
+    .center-rudder-button {
+      width: 100%;
+      margin-top: 12px;
+      background-color: #1e2d3e;
+      color: white;
+    }
+    
     .limit-label {
       color: #aaa;
       font-size: 12px;
@@ -597,6 +605,11 @@ export class RemoteControlComponent implements OnInit {
       this.thrust -= 1;
       this.sendThrustCommand(this.thrust);
     }
+  }
+  
+  centerRudder() {
+    this.rudder = 0;
+    this.sendRudderCommand(this.rudder);
   }
 
   sendAutonomousCommand(command: 'start' | 'stop' | 'clear' | 'return') {
