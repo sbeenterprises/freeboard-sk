@@ -1090,19 +1090,54 @@
           <div class="setting-group-title">SIGNAL K: CONNECTION</div>
           <mat-card class="setting-card">
             <mat-card-content>
-              <!--<div class="setting-card-row-item">
-                <mat-checkbox
-                  #skproxied
-                  [(ngModel)]="facade.settings.selections.signalk.proxied"
-                  (change)="onFormChange($event, skproxied)"
-                  matToolTip="Check if Signal K server is behind a proxy"
-                  matTooltipPosition="below"
-                  label="after"
-                >
-                  Signal K server is behind a proxy.
-                </mat-checkbox>
-                <mat-error>Refresh required after change!</mat-error>
-              </div>-->
+              <div class="setting-card-row">
+                <fieldset>
+                  <legend>Server Connection:</legend>
+                  <span style="font-size: smaller">
+                    Configure the SignalK server connection settings.<br />
+                    <i>Changes will take effect after a page refresh.</i>
+                  </span>
+                  <div class="setting-card-row-item">
+                    <mat-form-field style="width: 100%">
+                      <mat-label>SignalK Server Host</mat-label>
+                      <input
+                        matInput
+                        #signalkHost
+                        id="signalkHost"
+                        [(ngModel)]="facade.settings.signalkServerConfig.host"
+                        (change)="onFormChange($event, signalkHost)"
+                        placeholder="localhost"
+                      />
+                    </mat-form-field>
+                  </div>
+                  <div class="setting-card-row-item">
+                    <mat-form-field style="width: 100%">
+                      <mat-label>SignalK Server Port</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        #signalkPort
+                        id="signalkPort"
+                        [(ngModel)]="facade.settings.signalkServerConfig.port"
+                        (change)="onFormChange($event, signalkPort)"
+                        placeholder="3000"
+                      />
+                    </mat-form-field>
+                  </div>
+                  <div class="setting-card-row-item">
+                    <mat-checkbox
+                      #signalkSsl
+                      id="signalkSsl"
+                      [(ngModel)]="facade.settings.signalkServerConfig.ssl"
+                      (change)="onFormChange($event, signalkSsl)"
+                      matTooltip="Use SSL/TLS for connection"
+                      label="after"
+                    >
+                      Use SSL/TLS (https)
+                    </mat-checkbox>
+                  </div>
+                </fieldset>
+              </div>
               <div class="setting-card-row">
                 <fieldset>
                   <legend>Filter Stream data:</legend>
@@ -1199,6 +1234,50 @@
                     <mat-icon>key_off</mat-icon>
                   </button>
                 </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div class="setting-group" id="sectMOOSIvP">
+          <div class="setting-group-title">MOOS-IvP: CONNECTION</div>
+          <mat-card class="setting-card">
+            <mat-card-content>
+              <div class="setting-card-row">
+                <fieldset>
+                  <legend>Server Connection:</legend>
+                  <span style="font-size: smaller">
+                    Configure the MOOS-IvP server connection settings.<br />
+                    <i>Changes will take effect after a page refresh.</i>
+                  </span>
+                  <div class="setting-card-row-item">
+                    <mat-form-field style="width: 100%">
+                      <mat-label>MOOS-IvP Server Host</mat-label>
+                      <input
+                        matInput
+                        #moosHost
+                        id="moosHost"
+                        [(ngModel)]="facade.settings.moosIvPServerConfig.host"
+                        (change)="onFormChange($event, moosHost)"
+                        placeholder="localhost"
+                      />
+                    </mat-form-field>
+                  </div>
+                  <div class="setting-card-row-item">
+                    <mat-form-field style="width: 100%">
+                      <mat-label>MOOS-IvP Server Port</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        #moosPort
+                        id="moosPort"
+                        [(ngModel)]="facade.settings.moosIvPServerConfig.port"
+                        (change)="onFormChange($event, moosPort)"
+                        placeholder="8000"
+                      />
+                    </mat-form-field>
+                  </div>
+                </fieldset>
               </div>
             </mat-card-content>
           </mat-card>

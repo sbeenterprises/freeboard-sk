@@ -121,6 +121,19 @@ export class SettingsDialog implements OnInit {
     } else {
       if (!f.invalid) {
         const signals: SettingsSignals = {};
+        
+        // Check if the change is to server configuration fields
+        if (
+          f.id === 'signalkHost' || 
+          f.id === 'signalkPort' || 
+          f.id === 'signalkSsl' ||
+          f.id === 'moosHost' ||
+          f.id === 'moosPort'
+        ) {
+          signals.serverConfigChanged = true;
+          console.log('Server configuration changed. Will require page refresh.');
+        }
+        
         if (
           ['notesminzoom', 'notesgetradius', 'notesrootfilter'].includes(f.id)
         ) {

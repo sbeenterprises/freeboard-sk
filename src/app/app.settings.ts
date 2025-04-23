@@ -18,6 +18,23 @@
     settings: IAppConfig,
     hostParams: { [key: string]: unknown }
   ) {
+    // Initialize the SignalK server config if missing
+    if (typeof settings.signalkServerConfig === 'undefined') {
+      settings.signalkServerConfig = {
+        host: 'localhost',
+        port: 3000,
+        ssl: false
+      };
+    }
+    
+    // Initialize the MOOS-IvP server config if missing
+    if (typeof settings.moosIvPServerConfig === 'undefined') {
+      settings.moosIvPServerConfig = {
+        host: 'localhost',
+        port: 8000
+      };
+    }
+    
     if (typeof settings.fixedLocationMode === 'undefined') {
       settings.fixedLocationMode = false;
     }
@@ -281,6 +298,15 @@
     experiments: false,
     version: '',
     darkMode: { enabled: false, source: 0 }, // source: 0= browser default, 1= Signal K mode, -1=manual)
+    signalkServerConfig: {
+      host: 'localhost',
+      port: 3000,
+      ssl: false
+    },
+    moosIvPServerConfig: {
+      host: 'localhost',
+      port: 8000
+    },
     map: {
       // ** map config
       zoomLevel: 2,
@@ -418,6 +444,15 @@
     experiments: boolean;
     version: string;
     darkMode: { enabled: boolean; source: 0 | 1 | -1 }; // source: 0= browser default, 1= Signal K mode, -1=manual)
+    signalkServerConfig: {
+      host: string; // SignalK server hostname/IP
+      port: number; // SignalK server port
+      ssl: boolean; // Use SSL/TLS for connection
+    };
+    moosIvPServerConfig: {
+      host: string; // MOOS-IvP server hostname/IP
+      port: number; // MOOS-IvP server port
+    };
     map: {
       // ** map config
       zoomLevel: number;

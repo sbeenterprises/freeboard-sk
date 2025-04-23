@@ -164,4 +164,17 @@ export interface FBAppData {
     url: string;
     connected: boolean;
   };
+  connectionState?: {
+    signalK: {
+      connected: boolean;
+      connecting: boolean;
+      lastAttempt: number;
+    };
+    moosIvP: {
+      connected: boolean;
+      connecting: boolean;
+      lastAttempt: number;
+    };
+  };
+  signalkConnecting?: boolean;
 }

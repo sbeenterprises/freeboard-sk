@@ -213,6 +213,22 @@ export class SettingsFacade {
     this.settings = this.app.config;
     this.fixedPosition = this.settings.fixedPosition.slice();
 
+    // Ensure server configs exist
+    if (!this.settings.signalkServerConfig) {
+      this.settings.signalkServerConfig = {
+        host: 'localhost',
+        port: 3000,
+        ssl: false
+      };
+    }
+    
+    if (!this.settings.moosIvPServerConfig) {
+      this.settings.moosIvPServerConfig = {
+        host: 'localhost',
+        port: 8000
+      };
+    }
+
     if (!this.app.config.chartApi) {
       this.app.config.chartApi = 1;
     }
@@ -330,6 +346,10 @@ export class SettingsFacade {
 
   applySettings(signals?: SettingsSignals) {
     this.app.debug('Saving Settings..');
+    
+    // Check if server connection settings were changed
+    const serverConfigChanged = signals?.serverConfigChanged || false;
+    
     if (!this.app.config.selections.vessel.trail) {
       this.app.config.selections.trailFromServer = false;
     }
@@ -343,6 +363,16 @@ export class SettingsFacade {
           this.fixedPosition.slice() as Position;
       }
     }
+    
     this.app.saveConfig(signals ?? {});
+    
+    // Show message if server settings were changed
+    if (serverConfigChanged) {
+      this.app.showMessage(
+        'Server connection settings updated. Please refresh the page for changes to take effect.',
+        false,
+        5000
+      );
+    }
   }
 }

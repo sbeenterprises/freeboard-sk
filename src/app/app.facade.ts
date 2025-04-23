@@ -75,8 +75,8 @@ export const OSM = [
 @Injectable({ providedIn: 'root' })
 export class AppFacade extends Info {
   private DEV_SERVER = {
-    host: 'localhost', //'192.168.86.32', // host name || ip address
-    port: 3000, // port number
+    host: 'localhost', // default host name || ip address
+    port: 3000, // default port number
     ssl: false
   };
 
@@ -163,16 +163,41 @@ export class AppFacade extends Info {
       });
     }
 
-    // host
+    // apply base config first
+    this.config = JSON.parse(JSON.stringify(DefaultConfig));
+    
+    // Load any saved config from localStorage
+    this.loadConfig();
+    
+    // Ensure server configs exist
+    if (!this.config.signalkServerConfig) {
+      this.config.signalkServerConfig = {
+        host: 'localhost',
+        port: 3000,
+        ssl: false
+      };
+    }
+    
+    if (!this.config.moosIvPServerConfig) {
+      this.config.moosIvPServerConfig = {
+        host: 'localhost',
+        port: 8000
+      };
+    }
+
+    // host determination - URL params override config, which overrides defaults
     this.hostName =
       typeof this.hostParams.host !== 'undefined'
         ? this.hostParams.host
+        : this.config.signalkServerConfig?.host
+        ? this.config.signalkServerConfig.host
         : this.devMode && this.DEV_SERVER.host
         ? this.DEV_SERVER.host
         : window.location.hostname;
 
     this.hostSSL =
       window.location.protocol === 'https:' ||
+      (this.config.signalkServerConfig?.ssl) ||
       (this.devMode && this.DEV_SERVER.ssl)
         ? true
         : false;
@@ -180,6 +205,8 @@ export class AppFacade extends Info {
     this.hostPort =
       typeof this.hostParams.port !== 'undefined'
         ? parseInt(this.hostParams.port)
+        : this.config.signalkServerConfig?.port
+        ? this.config.signalkServerConfig.port
         : this.devMode && this.DEV_SERVER.port
         ? this.DEV_SERVER.port
         : parseInt(window.location.port);
@@ -191,14 +218,20 @@ export class AppFacade extends Info {
         : 80
       : this.hostPort;
 
+    // Update config with effective values
+    if (!this.config.signalkServerConfig) {
+      this.config.signalkServerConfig = {
+        host: this.hostName,
+        port: this.hostPort,
+        ssl: this.hostSSL
+      };
+    }
+    
     this.host = `${this.hostSSL ? 'https:' : 'http:'}//${this.hostName}:${
       this.hostPort
     }`;
 
     this.debug('host:', this.host);
-
-    // apply base config
-    this.config = JSON.parse(JSON.stringify(DefaultConfig));
     // apply default data
     this.data = {
       firstRun: false,

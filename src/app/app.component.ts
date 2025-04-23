@@ -187,6 +187,14 @@ export class AppComponent {
   }
 
   ngOnInit() {
+    // Initialize connection state tracking
+    if (!this.app.data.connectionState) {
+      this.app.data.connectionState = {
+        signalK: { connected: false, connecting: false, lastAttempt: 0 },
+        moosIvP: { connected: false, connecting: false, lastAttempt: 0 }
+      };
+    }
+    
     // ** audio context handing **
     this.display.audio.state = this.app.audio.context.state;
     this.app.debug('audio state:', this.display.audio.state);
@@ -590,13 +598,70 @@ export class AppComponent {
 
   // ** establish connection to server
   private connectSignalKServer() {
+    // Check if we've attempted to connect recently (avoid spamming connection attempts)
+    const now = Date.now();
+    const lastAttempt = this.app.data.connectionState?.signalK?.lastAttempt || 0;
+    if (now - lastAttempt < 4000) {
+      console.log('Skipping SignalK connection attempt - too soon since last attempt');
+      return;
+    }
+    
+    // Track connection state for messaging
+    const wasConnected = this.app.data.connectionState?.signalK?.connected || false;
+    
+    // Reset state
     this.app.data.selfId = null;
     this.app.data.server = null;
     this.signalk.proxied = this.app.config.selections.signalk.proxied;
+    
+    // Use values directly from the signalkServerConfig
+    const host = this.app.config.signalkServerConfig?.host || 'localhost';
+    const port = this.app.config.signalkServerConfig?.port || 3000;
+    const ssl = this.app.config.signalkServerConfig?.ssl || false;
+    
+    // Update connection state
+    this.app.data.connectionState.signalK.connecting = true;
+    this.app.data.connectionState.signalK.connected = false;
+    this.app.data.connectionState.signalK.lastAttempt = now;
+    
+    console.log(`Connecting to SignalK server at ${ssl ? 'https' : 'http'}://${host}:${port}`);
+    
+    // Create a separate timeout in case the subscribe call itself doesn't fire
+    const connectionTimeout = setTimeout(() => {
+      // If we're still connecting after 5 seconds, consider it a failure
+      if (this.app.data.connectionState.signalK.connecting) {
+        console.error('SignalK connection attempt timed out');
+        this.app.data.connectionState.signalK.connecting = false;
+        this.app.showMessage(
+          `Unable to connect to SignalK server at ${host}:${port}. Retrying...`,
+          false,
+          3000
+        );
+        // Schedule the next connection attempt
+        this.scheduleSignalKReconnect();
+      }
+    }, 5000);
+    
     this.signalk
-      .connect(this.app.hostName, this.app.hostPort, this.app.hostSSL)
+      .connect(host, port, ssl)
       .subscribe(
         () => {
+          // Connection succeeded, clear the timeout
+          clearTimeout(connectionTimeout);
+          
+          // Update connection status
+          this.app.data.connectionState.signalK.connecting = false;
+          this.app.data.connectionState.signalK.connected = true;
+          
+          // Show success message when connection is established
+          if (!wasConnected) {
+            this.app.showMessage(
+              `Connected to SignalK server at ${host}:${port}`,
+              false,
+              3000
+            );
+          }
+          
           this.signalk.authToken = this.app.getFBToken();
           this.app.watchSKLogin();
           this.handleSKLoginEvent();
@@ -615,58 +680,188 @@ export class AppComponent {
           this.app.data.server = this.signalk.server.info;
           this.openSKStream();
         },
-        () => {
-          this.app.showMessage(
-            'Unable to contact Signal K server! (Retrying in 5 secs)',
-            false,
-            5000
-          );
-          setTimeout(() => this.connectSignalKServer(), 5000);
+        (error) => {
+          // Connection failed, clear the timeout
+          clearTimeout(connectionTimeout);
+          
+          // Update connection status
+          this.app.data.connectionState.signalK.connecting = false;
+          this.app.data.connectionState.signalK.connected = false;
+          
+          // If we were previously connected, show a "connection lost" message
+          if (wasConnected) {
+            this.app.showMessage(
+              `SignalK server connection lost. Reconnecting...`,
+              false,
+              3000
+            );
+          } else {
+            this.app.showMessage(
+              `Unable to connect to SignalK server at ${host}:${port}. Retrying...`,
+              false,
+              3000
+            );
+          }
+          
+          console.error('SignalK connection error:', error);
+          
+          // Schedule the next connection attempt
+          this.scheduleSignalKReconnect();
         }
       );
+  }
+  
+  // Helper method to schedule SignalK reconnection
+  private scheduleSignalKReconnect() {
+    console.log('Scheduling SignalK reconnection attempt in 5 seconds');
+    setTimeout(() => {
+      this.connectSignalKServer();
+    }, 5000);
   }
 
   // Connection to MOOS-IvP websocket
   private connectMOOSIvPServer(): void {
-    const host = this.app.hostName || 'localhost';
-    const wsUrl = `ws://${host}:8000`;
+    // Check if we've attempted to connect recently (avoid spamming connection attempts)
+    const now = Date.now();
+    const lastAttempt = this.app.data.connectionState?.moosIvP?.lastAttempt || 0;
+    if (now - lastAttempt < 4000) {
+      console.log('Skipping MOOS-IvP connection attempt - too soon since last attempt');
+      return;
+    }
+    
+    // Use configured MOOS-IvP server settings directly from config
+    const host = this.app.config.moosIvPServerConfig?.host || 'localhost';
+    const port = this.app.config.moosIvPServerConfig?.port || 8000;
+    const wsUrl = `ws://${host}:${port}`;
+    
+    console.log(`Connecting to MOOS-IvP WebSocket at ${wsUrl}`);
   
+    // Track if this is a reconnection attempt
+    const wasConnected = this.app.data.connectionState?.moosIvP?.connected || false;
+    
+    // Update connection state
+    this.app.data.connectionState.moosIvP.connecting = true;
+    this.app.data.connectionState.moosIvP.connected = false;
+    this.app.data.connectionState.moosIvP.lastAttempt = now;
+    
     // Optionally, clear any previous connection state
     this.app.data.moosIvPServer = null;
+    
+    // Create a separate timeout for WebSocket connection attempts
+    const connectionTimeout = setTimeout(() => {
+      // If we're still connecting after 5 seconds, consider it a failure
+      if (this.app.data.connectionState.moosIvP.connecting) {
+        console.error('MOOS-IvP connection attempt timed out');
+        this.app.data.connectionState.moosIvP.connecting = false;
+        this.app.showMessage(
+          `Unable to connect to MOOS-IvP server at ${host}:${port}. Retrying...`,
+          false,
+          3000
+        );
+        // Schedule the next connection attempt
+        this.scheduleMOOSIvPReconnect();
+      }
+    }, 5000);
   
     // Initialize the WebSocket connection
-    const moosSocket = new WebSocket(wsUrl);
+    let moosSocket: WebSocket;
     
-    // Save the socket if you need to reference it later
-    this.app.data.moosIvPServer = { socket: moosSocket, url: wsUrl, connected: false };
+    try {
+      moosSocket = new WebSocket(wsUrl);
+      
+      // Save the socket if you need to reference it later
+      this.app.data.moosIvPServer = { 
+        socket: moosSocket, 
+        url: wsUrl, 
+        connected: false
+      };
 
-    moosSocket.onopen = (event: Event) => {
-      console.log(`Connected to MOOS-IvP WebSocket server at ${wsUrl}`, event);
-      this.app.data.moosIvPServer.connected = true;
-      // Send an optional subscription or handshake message if required by MOOS-IvP
-      moosSocket.send("DEPLOY=false");
-    };
+      moosSocket.onopen = (event: Event) => {
+        // Clear the connection timeout
+        clearTimeout(connectionTimeout);
+        
+        console.log(`Connected to MOOS-IvP WebSocket server at ${wsUrl}`, event);
+        this.app.data.moosIvPServer.connected = true;
+        
+        // Update connection state
+        this.app.data.connectionState.moosIvP.connected = true;
+        this.app.data.connectionState.moosIvP.connecting = false;
+        
+        // Show connection success message if this was a reconnection or initial connection
+        if (!wasConnected) {
+          this.app.showMessage(`Connected to MOOS-IvP server at ${host}:${port}`, false, 3000);
+        }
+        
+        // Send an optional subscription or handshake message if required by MOOS-IvP
+        moosSocket.send("DEPLOY=false");
+      };
 
-    moosSocket.onerror = (error: Event) => {
-      console.error('Error connecting to MOOS-IvP server:', error);
-      this.app.showMessage('Unable to contact MOOS-IvP server! (Retrying in 5 secs)', false, 5000);
-    };
+      moosSocket.onerror = (error: Event) => {
+        console.error('Error connecting to MOOS-IvP server:', error);
+        
+        // Update connection state
+        this.app.data.connectionState.moosIvP.connecting = false;
+        this.app.data.connectionState.moosIvP.connected = false;
+        
+        // Always show an error message
+        this.app.showMessage(
+          `Error connecting to MOOS-IvP server at ${host}:${port}. Retrying...`,
+          false,
+          3000
+        );
+      };
 
-    moosSocket.onclose = (event: CloseEvent) => {
-      console.warn('MOOS-IvP WebSocket connection closed:', event);
-      this.app.data.moosIvPServer.connected = false;
-      // Attempt reconnect after 5 seconds
-      setTimeout(() => {
-        this.connectMOOSIvPServer();
-      }, 5000);
-    };
-    
-    moosSocket.onmessage = (message: MessageEvent) => {
-      console.log('Received MOOS-IvP message:', message.data);
-      // Process incoming data. Adjust based on MOOS-IvP message format.
-      // const data = JSON.parse(message.data);
-      // this.handleMOOSIvPMessage(data);
-    };
+      moosSocket.onclose = (event: CloseEvent) => {
+        // Clear the connection timeout
+        clearTimeout(connectionTimeout);
+        
+        console.warn('MOOS-IvP WebSocket connection closed:', event);
+        
+        // Update connection state
+        this.app.data.connectionState.moosIvP.connecting = false;
+        this.app.data.connectionState.moosIvP.connected = false;
+        
+        // Only mark as disconnected if we were previously connected
+        if (wasConnected) {
+          this.app.showMessage(`MOOS-IvP server connection lost. Reconnecting...`, false, 3000);
+        } else {
+          // Always show notification even if not previously connected
+          this.app.showMessage(`Unable to connect to MOOS-IvP server at ${host}:${port}. Retrying...`, false, 3000);
+        }
+        
+        // Schedule reconnect after 5 seconds
+        this.scheduleMOOSIvPReconnect();
+      };
+      
+      moosSocket.onmessage = (message: MessageEvent) => {
+        console.log('Received MOOS-IvP message:', message.data);
+        // Process incoming data. Adjust based on MOOS-IvP message format.
+        // const data = JSON.parse(message.data);
+        // this.handleMOOSIvPMessage(data);
+      };
+    } catch (err) {
+      // Clear the connection timeout
+      clearTimeout(connectionTimeout);
+      
+      console.error('Failed to create WebSocket connection to MOOS-IvP server:', err);
+      
+      // Update connection state
+      this.app.data.connectionState.moosIvP.connecting = false;
+      this.app.data.connectionState.moosIvP.connected = false;
+      
+      this.app.showMessage(`Unable to connect to MOOS-IvP server at ${host}:${port}. Retrying...`, false, 3000);
+      
+      // Schedule reconnect after 5 seconds
+      this.scheduleMOOSIvPReconnect();
+    }
+  }
+  
+  // Helper method to schedule MOOS-IvP reconnection
+  private scheduleMOOSIvPReconnect() {
+    console.log('Scheduling MOOS-IvP reconnection attempt in 5 seconds');
+    setTimeout(() => {
+      this.connectMOOSIvPServer();
+    }, 5000);
   }
 
   // ** discover server features **

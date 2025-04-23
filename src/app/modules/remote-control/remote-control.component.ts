@@ -352,8 +352,13 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
     }
     
     .center-rudder-button {
-      width: 100%;
-      margin-top: 12px;
+      width: 40%;
+      margin: 12px auto 0;
+      display: block;
+      padding: 4px 9px;
+      font-size: 13px;
+      height: 30px;
+      line-height: 30px;
       background-color: #1e2d3e;
       color: white;
     }
