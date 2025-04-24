@@ -113,6 +113,18 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
                       (click)="setGear('reverse')">Reverse</button>
             </div>
           </div>
+          
+          <div class="control-section">
+            <label>CAN Network</label>
+            <div class="button-group">
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': !canNetworkActive, 'button-warn': canNetworkActive}"
+                      (click)="toggleCanNetwork()">
+                {{ canNetworkActive ? 'Activate CAN Network' : 'Deactivate CAN Network' }}
+              </button>
+            </div>
+          </div>
         </ng-container>
         
         <!-- Autonomous Control Section (shown only in autonomous control mode) -->
@@ -163,6 +175,18 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
               </button>
               <button mat-raised-button class="autonomous-button" [ngClass]="{'green-button': returnToBaseActive}" [color]="returnToBaseActive ? '' : 'accent'" (click)="sendAutonomousCommand('return')">
                 <mat-icon>home</mat-icon> Return to Base
+              </button>
+            </div>
+          </div>
+          
+          <div class="control-section">
+            <label>CAN Network</label>
+            <div class="button-group">
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': !canNetworkActive, 'button-warn': canNetworkActive}"
+                      (click)="toggleCanNetwork()">
+                {{ canNetworkActive ? 'Activate CAN Network' : 'Deactivate CAN Network' }}
               </button>
             </div>
           </div>
@@ -457,6 +481,11 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
       background-color: #4CAF50 !important;
       color: white !important;
     }
+    
+    .button-warn {
+      background-color: #f44336 !important;
+      color: white !important;
+    }
   `]
 })
 export class RemoteControlComponent implements OnInit {
@@ -496,7 +525,18 @@ export class RemoteControlComponent implements OnInit {
     });
     // Initial load with a slight delay to ensure routes are fetched
     setTimeout(() => this.loadRoutes(), 500);
+    
+    // Send AUTONOMOUS_CONTROL=true if in autonomous mode when component initializes
+    if (this.isAutonomous && 
+        this.app.data.moosIvPServer && 
+        this.app.data.moosIvPServer.socket &&
+        this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN) {
+      console.log("Sending AUTONOMOUS_CONTROL=true to MOOS-IvP");
+      this.app.data.moosIvPServer.socket.send("AUTONOMOUS_CONTROL=true");
+    }
   }
+  
+  canNetworkActive = false;
 
   loadRoutes() {
     console.log('Loading routes into dropdown...');
@@ -576,7 +616,9 @@ export class RemoteControlComponent implements OnInit {
       this.app.data.moosIvPServer.socket &&
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
+      // Send different command based on control mode
       this.app.data.moosIvPServer.socket.send(`DESIRED_THRUST=${value}`);
+      
     }
   }
 
@@ -615,6 +657,20 @@ export class RemoteControlComponent implements OnInit {
   centerRudder() {
     this.rudder = 0;
     this.sendRudderCommand(this.rudder);
+  }
+  
+  toggleCanNetwork() {
+    this.canNetworkActive = !this.canNetworkActive;
+    console.log(`Toggling CAN Network: ${this.canNetworkActive ? 'Deactivated' : 'Activated'}`);
+    
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      // Send STOP_CAN=true to deactivate or STOP_CAN=false to activate
+      this.app.data.moosIvPServer.socket.send(`STOP_CAN=${this.canNetworkActive}`);
+    }
   }
 
   sendAutonomousCommand(command: 'start' | 'stop' | 'clear' | 'return') {
