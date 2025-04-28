@@ -566,6 +566,14 @@ export class RemoteControlComponent implements OnInit {
       if (route && route[1] && route[1].feature && route[1].feature.geometry && route[1].feature.geometry.coordinates) {
         const waypoints = route[1].feature.geometry.coordinates;
         
+        // Make only the selected route visible on the map
+        this.app.data.routes.forEach(r => {
+          // Set isSelected (third element) to true only for the selected route
+          r[2] = (r[0] === this.selectedRouteId);
+        });
+        // Notify the map component that route selection has changed
+        this.skResources.routeSelected();
+        
         // Send waypoints to MOOS-IvP
         this.sendWaypointsToMOOS(waypoints);
       } else {
