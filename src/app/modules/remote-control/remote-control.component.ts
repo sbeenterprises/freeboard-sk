@@ -218,6 +218,58 @@ import { HeadingPlotComponent } from './heading-plot.component';
                   <span class="limit-label">360°</span>
                 </div>
               </div>
+              
+              <div class="pid-container">
+                <label>PID Heading Control</label>
+                
+                <!-- KP Slider -->
+                <div class="pid-slider-row">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', -0.1)" [disabled]="headingKp <= 0">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  
+                  <div class="pid-slider-container">
+                    <div class="pid-label">KP: {{headingKp.toFixed(1)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKp" (change)="sendPIDValue('KP', headingKp)">
+                  </div>
+                  
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', 0.1)" [disabled]="headingKp >= 10">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                
+                <!-- KI Slider -->
+                <div class="pid-slider-row">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', -0.1)" [disabled]="headingKi <= 0">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  
+                  <div class="pid-slider-container">
+                    <div class="pid-label">KI: {{headingKi.toFixed(1)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKi" (change)="sendPIDValue('KI', headingKi)">
+                  </div>
+                  
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', 0.1)" [disabled]="headingKi >= 10">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+                
+                <!-- KD Slider -->
+                <div class="pid-slider-row">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', -0.1)" [disabled]="headingKd <= 0">
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  
+                  <div class="pid-slider-container">
+                    <div class="pid-label">KD: {{headingKd.toFixed(1)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKd" (change)="sendPIDValue('KD', headingKd)">
+                  </div>
+                  
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', 0.1)" [disabled]="headingKd >= 10">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </ng-container>
@@ -529,6 +581,38 @@ import { HeadingPlotComponent } from './heading-plot.component';
       font-weight: 500;
       color: #ddd;
     }
+    
+    .pid-container {
+      margin-top: 20px;
+      padding: 0 10px;
+    }
+    
+    .pid-slider-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .pid-slider-container {
+      flex: 1;
+      margin: 0 10px;
+    }
+    
+    .pid-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ddd;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+    
+    .pid-button {
+      background-color: #1e2d3e;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      width: 36px;
+      height: 36px;
+    }
   `]
 })
 export class RemoteControlComponent implements OnInit {
@@ -585,6 +669,9 @@ export class RemoteControlComponent implements OnInit {
   canNetworkActive = false;
   constantHeadingActive = false;
   headingSetpoint = 0; // Range 0-360 degrees
+  headingKp = 0.1;  // Default PID values
+  headingKi = 0.0;
+  headingKd = 0.1;
 
   loadRoutes() {
     console.log('Loading routes into dropdown...');
@@ -827,6 +914,42 @@ export class RemoteControlComponent implements OnInit {
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
       const message = `SETPOINT_HEADING=${value}`;
+      console.log(`Sending to MOOS-IvP: ${message}`);
+      this.app.data.moosIvPServer.socket.send(message);
+    } else {
+      console.warn('MOOS-IvP connection not available');
+    }
+  }
+  
+  // Adjust PID parameter value using buttons
+  adjustPID(parameter: 'KP' | 'KI' | 'KD', delta: number) {
+    switch(parameter) {
+      case 'KP':
+        this.headingKp = Math.max(0, Math.min(10, this.headingKp + delta));
+        this.sendPIDValue('KP', this.headingKp);
+        break;
+      case 'KI':
+        this.headingKi = Math.max(0, Math.min(10, this.headingKi + delta));
+        this.sendPIDValue('KI', this.headingKi);
+        break;
+      case 'KD':
+        this.headingKd = Math.max(0, Math.min(10, this.headingKd + delta));
+        this.sendPIDValue('KD', this.headingKd);
+        break;
+    }
+  }
+  
+  // Send PID parameter value to MOOS-IvP
+  sendPIDValue(parameter: 'KP' | 'KI' | 'KD', value: number) {
+    const parameterName = `HEADING_${parameter}`;
+    console.log(`Setting ${parameterName} to: ${value.toFixed(1)}`);
+    
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      const message = `${parameterName}=${value.toFixed(1)}`;
       console.log(`Sending to MOOS-IvP: ${message}`);
       this.app.data.moosIvPServer.socket.send(message);
     } else {
