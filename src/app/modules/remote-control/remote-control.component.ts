@@ -202,6 +202,22 @@ import { HeadingPlotComponent } from './heading-plot.component';
                       (click)="openHeadingPlot()">
                 <mat-icon>timeline</mat-icon> Plot Heading
               </button>
+              
+              <button class="gear-button" 
+                      mat-raised-button 
+                      [ngClass]="{'green-gear-button': constantHeadingActive, 'button-primary': !constantHeadingActive}"
+                      (click)="toggleConstantHeading()">
+                <mat-icon>explore</mat-icon> {{ constantHeadingActive ? 'Constant Heading ON' : 'Constant Heading OFF' }}
+              </button>
+              
+              <div class="heading-slider-container">
+                <label>Heading Setpoint: {{headingSetpoint}}°</label>
+                <div class="horizontal-slider-container">
+                  <span class="limit-label">0°</span>
+                  <input class="slider horizontal" type="range" min="0" max="360" [(ngModel)]="headingSetpoint" (change)="sendHeadingSetpoint(headingSetpoint)">
+                  <span class="limit-label">360°</span>
+                </div>
+              </div>
             </div>
           </div>
         </ng-container>
@@ -500,6 +516,19 @@ import { HeadingPlotComponent } from './heading-plot.component';
       background-color: #f44336 !important;
       color: white !important;
     }
+    
+    .heading-slider-container {
+      margin-top: 15px;
+      padding: 0 10px;
+    }
+    
+    .heading-slider-container label {
+      text-align: center;
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+      color: #ddd;
+    }
   `]
 })
 export class RemoteControlComponent implements OnInit {
@@ -541,11 +570,21 @@ export class RemoteControlComponent implements OnInit {
     // Initial load with a slight delay to ensure routes are fetched
     setTimeout(() => this.loadRoutes(), 500);
     
+    // Initialize heading setpoint with current vessel heading if available
+    if (this.app.data.vessels && this.app.data.vessels.self) {
+      const currentHeading = Math.round(this.app.data.vessels.self.headingTrue * 180 / Math.PI);
+      if (!isNaN(currentHeading)) {
+        this.headingSetpoint = currentHeading;
+      }
+    }
+    
     // We don't send AUTONOMOUS_CONTROL=true automatically on initialization
     // This ensures autonomous control isn't automatically toggled when the app starts
   }
   
   canNetworkActive = false;
+  constantHeadingActive = false;
+  headingSetpoint = 0; // Range 0-360 degrees
 
   loadRoutes() {
     console.log('Loading routes into dropdown...');
@@ -754,6 +793,46 @@ export class RemoteControlComponent implements OnInit {
   openHeadingPlot() {
     this.app.sHeadingPlotShow.update(value => !value);
   }
+  
+  // Toggle constant heading mode
+  toggleConstantHeading() {
+    this.constantHeadingActive = !this.constantHeadingActive;
+    console.log(`Toggling Constant Heading to: ${this.constantHeadingActive}`);
+    
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      const message = `CONSTANT_HEADING=${this.constantHeadingActive}`;
+      console.log(`Sending to MOOS-IvP: ${message}`);
+      this.app.data.moosIvPServer.socket.send(message);
+      
+      // If we're activating constant heading, also send the current setpoint
+      //if (this.constantHeadingActive) {
+      //  this.sendHeadingSetpoint(this.headingSetpoint);
+      //}
+    } else {
+      console.warn('MOOS-IvP connection not available');
+    }
+  }
+  
+  // Send heading setpoint to MOOS-IvP
+  sendHeadingSetpoint(value: number) {
+    console.log(`Setting heading setpoint to: ${value}°`);
+    
+    if (
+      this.app.data.moosIvPServer &&
+      this.app.data.moosIvPServer.socket &&
+      this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
+    ) {
+      const message = `SETPOINT_HEADING=${value}`;
+      console.log(`Sending to MOOS-IvP: ${message}`);
+      this.app.data.moosIvPServer.socket.send(message);
+    } else {
+      console.warn('MOOS-IvP connection not available');
+    }
+  }
 
   closePanel() {
     console.log("Closing control panel");
@@ -775,6 +854,12 @@ export class RemoteControlComponent implements OnInit {
       this.returnToBaseActive = false;
       this.selectedRouteId = '';
       
+      // If constant heading is active, turn it off
+      if (this.constantHeadingActive) {
+        this.constantHeadingActive = false;
+        this.app.data.moosIvPServer.socket.send("CONSTANT_HEADING=false");
+      }
+      
       // Update the autonomous control button state
       this.app.config.selections.autonomousControl = false;
     } else {
@@ -786,6 +871,12 @@ export class RemoteControlComponent implements OnInit {
       ) {
         console.log("Sending CONTROLE_MANUAL=false to MOOS-IvP");
         this.app.data.moosIvPServer.socket.send("CONTROLE_MANUAL=false");
+      }
+      
+      // If constant heading is active, turn it off
+      if (this.constantHeadingActive) {
+        this.constantHeadingActive = false;
+        this.app.data.moosIvPServer.socket.send("CONSTANT_HEADING=false");
       }
       
       // Update the remote control button state
