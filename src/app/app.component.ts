@@ -195,6 +195,12 @@ export class AppComponent {
       };
     }
     
+    // Ensure autonomous control is not active on startup
+    if (this.app.config.selections.autonomousControl) {
+      this.app.config.selections.autonomousControl = false;
+      this.app.saveConfig();
+    }
+    
     // ** audio context handing **
     this.display.audio.state = this.app.audio.context.state;
     this.app.debug('audio state:', this.display.audio.state);
@@ -323,6 +329,10 @@ export class AppComponent {
 
   public toggleAlertList(show: boolean) {
     this.app.sAlertListShow.set(show);
+  }
+  
+  public toggleHeadingPlot(show: boolean) {
+    this.app.sHeadingPlotShow.set(show);
   }
 
   public toggleLimitMapZoom() {
@@ -794,6 +804,13 @@ export class AppComponent {
         
         // Send an optional subscription or handshake message if required by MOOS-IvP
         moosSocket.send("DEPLOY=false");
+        
+        // Always ensure autonomous control is turned off on connection
+        if (this.app.config.selections.autonomousControl) {
+          moosSocket.send("AUTONOMOUS_CONTROL=false");
+          this.app.config.selections.autonomousControl = false;
+          this.app.saveConfig();
+        }
       };
 
       moosSocket.onerror = (error: Event) => {
@@ -835,6 +852,9 @@ export class AppComponent {
       
       moosSocket.onmessage = (message: MessageEvent) => {
         console.log('Received MOOS-IvP message:', message.data);
+        // Store the last message received for other components to use
+        this.app.data.moosIvPServer.lastMessage = message.data;
+        
         // Process incoming data. Adjust based on MOOS-IvP message format.
         // const data = JSON.parse(message.data);
         // this.handleMOOSIvPMessage(data);

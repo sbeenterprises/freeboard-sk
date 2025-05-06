@@ -163,6 +163,7 @@ export interface FBAppData {
     socket: WebSocket;
     url: string;
     connected: boolean;
+    lastMessage?: string;
   };
   connectionState?: {
     signalK: {

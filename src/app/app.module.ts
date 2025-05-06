@@ -37,7 +37,8 @@ import {
   TrackListComponent,
   AISListComponent,
   BuildRouteComponent,
-  RemoteControlComponent
+  RemoteControlComponent,
+  HeadingPlotComponent
 } from './modules';
 
 import {
@@ -91,7 +92,8 @@ import {
     AlertComponent,
     AlertListComponent,
     RouteNextPointComponent,
-    RemoteControlComponent
+    RemoteControlComponent,
+    HeadingPlotComponent
   ],
   providers: [provideHttpClient(withInterceptorsFromDi())]
 })

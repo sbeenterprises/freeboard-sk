@@ -6,8 +6,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialog } from '@angular/material/dialog';
 import { AppFacade } from 'src/app/app.facade';
 import { SKResources } from 'src/app/modules/skresources/resources.service';
+import { HeadingPlotComponent } from './heading-plot.component';
 
 @Component({
   selector: 'remote-control',
@@ -187,6 +189,18 @@ import { SKResources } from 'src/app/modules/skresources/resources.service';
                       [ngClass]="{'green-gear-button': !canNetworkActive, 'button-warn': canNetworkActive}"
                       (click)="toggleCanNetwork()">
                 {{ canNetworkActive ? 'Activate CAN Network' : 'Deactivate CAN Network' }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="control-section">
+            <label>Data Visualization</label>
+            <div class="button-group">
+              <button class="gear-button"
+                      mat-raised-button
+                      color="primary"
+                      (click)="openHeadingPlot()">
+                <mat-icon>timeline</mat-icon> Plot Heading
               </button>
             </div>
           </div>
@@ -511,7 +525,8 @@ export class RemoteControlComponent implements OnInit {
   
   constructor(
     public app: AppFacade,
-    private skResources: SKResources
+    private skResources: SKResources,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -526,14 +541,8 @@ export class RemoteControlComponent implements OnInit {
     // Initial load with a slight delay to ensure routes are fetched
     setTimeout(() => this.loadRoutes(), 500);
     
-    // Send AUTONOMOUS_CONTROL=true if in autonomous mode when component initializes
-    if (this.isAutonomous && 
-        this.app.data.moosIvPServer && 
-        this.app.data.moosIvPServer.socket &&
-        this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN) {
-      console.log("Sending AUTONOMOUS_CONTROL=true to MOOS-IvP");
-      this.app.data.moosIvPServer.socket.send("AUTONOMOUS_CONTROL=true");
-    }
+    // We don't send AUTONOMOUS_CONTROL=true automatically on initialization
+    // This ensures autonomous control isn't automatically toggled when the app starts
   }
   
   canNetworkActive = false;
@@ -739,6 +748,11 @@ export class RemoteControlComponent implements OnInit {
     const lat = Math.abs(position[1]).toFixed(4) + (position[1] >= 0 ? '°N' : '°S');
     const lon = Math.abs(position[0]).toFixed(4) + (position[0] >= 0 ? '°E' : '°W');
     return `${lat} ${lon}`;
+  }
+
+  // Toggle the heading plot panel visibility
+  openHeadingPlot() {
+    this.app.sHeadingPlotShow.update(value => !value);
   }
 
   closePanel() {

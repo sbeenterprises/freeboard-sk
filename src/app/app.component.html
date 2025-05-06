@@ -911,6 +911,10 @@
             [alerts]="notiMgr.alerts()"
             (closed)="toggleAlertList(false)"
           ></alert-list>
+          } @if( app.sHeadingPlotShow()) {
+          <heading-plot
+            (closed)="toggleHeadingPlot(false)"
+          ></heading-plot>
           }
           
           <!-- Remote Control Panel is now displayed in the right side panel -->

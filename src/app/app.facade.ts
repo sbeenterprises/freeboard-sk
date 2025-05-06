@@ -123,6 +123,7 @@ export class AppFacade extends Info {
   sMapNorthUp = signal(true); // map North / Heading Up
   sIsFetching = signal(false); // show progress for fetching data from server
   sAlertListShow = signal(false); // display AlertList
+  sHeadingPlotShow = signal(false); // display HeadingPlot
 
   constructor(
     public signalk: SignalKClient,

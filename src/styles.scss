@@ -77,3 +77,15 @@ screen and (min-width: 1280px) and (max-width: 1919px),
 screen and (min-width: 1920px) and (max-width: 5000px) {
 
 }
+
+/* Plotly and dialog styles */
+.heading-plot-dialog .mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: #2a3f55;
+  color: white;
+  border-radius: 8px;
+  padding: 0;
+}
+
+.heading-plot-dialog .mat-mdc-dialog-container {
+  padding: 0;
+}
