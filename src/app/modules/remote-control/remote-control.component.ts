@@ -76,7 +76,15 @@ import { HeadingPlotComponent } from './heading-plot.component';
               <input class="slider horizontal" type="range" min="-30" max="30" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
               <span class="limit-label">30°</span>
             </div>
-            <button mat-raised-button class="center-rudder-button" (click)="centerRudder()">Center Rudder</button>
+            <div class="rudder-buttons">
+              <button mat-mini-fab class="rudder-button" (click)="decreaseRudder()" [disabled]="rudder <= -30">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <button mat-raised-button class="center-rudder-button" (click)="centerRudder()">Center Rudder</button>
+              <button mat-mini-fab class="rudder-button" (click)="increaseRudder()" [disabled]="rudder >= 30">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
           </div>
           
           <div class="control-section">
@@ -116,17 +124,6 @@ import { HeadingPlotComponent } from './heading-plot.component';
             </div>
           </div>
           
-          <div class="control-section">
-            <label>CAN Network</label>
-            <div class="button-group">
-              <button class="gear-button" 
-                      mat-raised-button 
-                      [ngClass]="{'green-gear-button': !canNetworkActive, 'button-warn': canNetworkActive}"
-                      (click)="toggleCanNetwork()">
-                {{ canNetworkActive ? 'Activate CAN Network' : 'Deactivate CAN Network' }}
-              </button>
-            </div>
-          </div>
         </ng-container>
         
         <!-- Autonomous Control Section (shown only in autonomous control mode) -->
@@ -177,18 +174,6 @@ import { HeadingPlotComponent } from './heading-plot.component';
               </button>
               <button mat-raised-button class="autonomous-button" [ngClass]="{'green-button': returnToBaseActive}" [color]="returnToBaseActive ? '' : 'accent'" (click)="sendAutonomousCommand('return')">
                 <mat-icon>home</mat-icon> Return to Base
-              </button>
-            </div>
-          </div>
-          
-          <div class="control-section">
-            <label>CAN Network</label>
-            <div class="button-group">
-              <button class="gear-button" 
-                      mat-raised-button 
-                      [ngClass]="{'green-gear-button': !canNetworkActive, 'button-warn': canNetworkActive}"
-                      (click)="toggleCanNetwork()">
-                {{ canNetworkActive ? 'Activate CAN Network' : 'Deactivate CAN Network' }}
               </button>
             </div>
           </div>
@@ -457,10 +442,25 @@ import { HeadingPlotComponent } from './heading-plot.component';
       height: 36px;
     }
     
+    .rudder-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .rudder-button {
+      background-color: #1e2d3e;
+      color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      width: 36px;
+      height: 36px;
+    }
+
     .center-rudder-button {
       width: 40%;
-      margin: 12px auto 0;
-      display: block;
+      margin: 0;
       padding: 4px 9px;
       font-size: 13px;
       height: 30px;
@@ -800,6 +800,20 @@ export class RemoteControlComponent implements OnInit {
   centerRudder() {
     this.rudder = 0;
     this.sendRudderCommand(this.rudder);
+  }
+
+  increaseRudder() {
+    if (this.rudder < 30) {
+      this.rudder += 1;
+      this.sendRudderCommand(this.rudder);
+    }
+  }
+
+  decreaseRudder() {
+    if (this.rudder > -30) {
+      this.rudder -= 1;
+      this.sendRudderCommand(this.rudder);
+    }
   }
   
   toggleCanNetwork() {
