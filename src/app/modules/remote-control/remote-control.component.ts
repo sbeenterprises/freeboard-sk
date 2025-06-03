@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -72,16 +72,16 @@ import { HeadingPlotComponent } from './heading-plot.component';
           <div class="control-section">
             <label>Rudder: {{rudder}}°</label>
             <div class="horizontal-slider-container">
-              <span class="limit-label">-30°</span>
-              <input class="slider horizontal" type="range" min="-30" max="30" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
-              <span class="limit-label">30°</span>
+              <span class="limit-label">-50°</span>
+              <input class="slider horizontal" type="range" min="-50" max="50" [(ngModel)]="rudder" (change)="sendRudderCommand(rudder)">
+              <span class="limit-label">50°</span>
             </div>
             <div class="rudder-buttons">
-              <button mat-mini-fab class="rudder-button" (click)="decreaseRudder()" [disabled]="rudder <= -30">
+              <button mat-mini-fab class="rudder-button" (click)="decreaseRudder()" [disabled]="rudder <= -50">
                 <mat-icon>remove</mat-icon>
               </button>
               <button mat-raised-button class="center-rudder-button" (click)="centerRudder()">Center Rudder</button>
-              <button mat-mini-fab class="rudder-button" (click)="increaseRudder()" [disabled]="rudder >= 30">
+              <button mat-mini-fab class="rudder-button" (click)="increaseRudder()" [disabled]="rudder >= 50">
                 <mat-icon>add</mat-icon>
               </button>
             </div>
@@ -112,15 +112,15 @@ import { HeadingPlotComponent } from './heading-plot.component';
               <button class="gear-button" 
                       mat-raised-button 
                       [ngClass]="{'green-gear-button': gear === 'forward'}" 
-                      (click)="setGear('forward')">Forward</button>
+                      (click)="setGear(1)">Forward</button>
               <button class="gear-button" 
                       mat-raised-button 
                       [ngClass]="{'green-gear-button': gear === 'neutral'}" 
-                      (click)="setGear('neutral')">Neutral</button>
+                      (click)="setGear(0)">Neutral</button>
               <button class="gear-button" 
                       mat-raised-button 
                       [ngClass]="{'green-gear-button': gear === 'reverse'}" 
-                      (click)="setGear('reverse')">Reverse</button>
+                      (click)="setGear(-1)">Reverse</button>
             </div>
           </div>
           
@@ -209,48 +209,48 @@ import { HeadingPlotComponent } from './heading-plot.component';
                 
                 <!-- KP Slider -->
                 <div class="pid-slider-row">
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', -0.1)" [disabled]="headingKp <= 0">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', -0.001)" [disabled]="headingKp <= 0">
                     <mat-icon>remove</mat-icon>
                   </button>
                   
                   <div class="pid-slider-container">
-                    <div class="pid-label">KP: {{headingKp.toFixed(1)}}</div>
-                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKp" (change)="sendPIDValue('KP', headingKp)">
+                    <div class="pid-label">KP: {{headingKp.toFixed(3)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.001" [(ngModel)]="headingKp" (change)="sendPIDValue('KP', headingKp)">
                   </div>
                   
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', 0.1)" [disabled]="headingKp >= 10">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KP', 0.001)" [disabled]="headingKp >= 10">
                     <mat-icon>add</mat-icon>
                   </button>
                 </div>
                 
                 <!-- KI Slider -->
                 <div class="pid-slider-row">
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', -0.1)" [disabled]="headingKi <= 0">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', -0.001)" [disabled]="headingKi <= 0">
                     <mat-icon>remove</mat-icon>
                   </button>
                   
                   <div class="pid-slider-container">
-                    <div class="pid-label">KI: {{headingKi.toFixed(1)}}</div>
-                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKi" (change)="sendPIDValue('KI', headingKi)">
+                    <div class="pid-label">KI: {{headingKi.toFixed(3)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.001" [(ngModel)]="headingKi" (change)="sendPIDValue('KI', headingKi)">
                   </div>
                   
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', 0.1)" [disabled]="headingKi >= 10">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KI', 0.001)" [disabled]="headingKi >= 10">
                     <mat-icon>add</mat-icon>
                   </button>
                 </div>
                 
                 <!-- KD Slider -->
                 <div class="pid-slider-row">
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', -0.1)" [disabled]="headingKd <= 0">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', -0.001)" [disabled]="headingKd <= 0">
                     <mat-icon>remove</mat-icon>
                   </button>
                   
                   <div class="pid-slider-container">
-                    <div class="pid-label">KD: {{headingKd.toFixed(1)}}</div>
-                    <input class="slider horizontal" type="range" min="0" max="10" step="0.1" [(ngModel)]="headingKd" (change)="sendPIDValue('KD', headingKd)">
+                    <div class="pid-label">KD: {{headingKd.toFixed(3)}}</div>
+                    <input class="slider horizontal" type="range" min="0" max="10" step="0.001" [(ngModel)]="headingKd" (change)="sendPIDValue('KD', headingKd)">
                   </div>
                   
-                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', 0.1)" [disabled]="headingKd >= 10">
+                  <button mat-mini-fab class="pid-button" (click)="adjustPID('KD', 0.001)" [disabled]="headingKd >= 10">
                     <mat-icon>add</mat-icon>
                   </button>
                 </div>
@@ -615,7 +615,7 @@ import { HeadingPlotComponent } from './heading-plot.component';
     }
   `]
 })
-export class RemoteControlComponent implements OnInit {
+export class RemoteControlComponent implements OnInit, OnDestroy {
   @Input() navData: any;
   @Output() closed = new EventEmitter<void>();
 
@@ -639,7 +639,8 @@ export class RemoteControlComponent implements OnInit {
   constructor(
     public app: AppFacade,
     private skResources: SKResources,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -664,6 +665,9 @@ export class RemoteControlComponent implements OnInit {
     
     // We don't send AUTONOMOUS_CONTROL=true automatically on initialization
     // This ensures autonomous control isn't automatically toggled when the app starts
+    
+    // Initialize gamepad support
+    this.initializeGamepad();
   }
   
   canNetworkActive = false;
@@ -672,6 +676,12 @@ export class RemoteControlComponent implements OnInit {
   headingKp = 0.1;  // Default PID values
   headingKi = 0.0;
   headingKd = 0.1;
+  
+  // Gamepad variables
+  private gamepadIndex: number = -1;
+  private gamepadPollingId: number | null = null;
+  private lastRudderValue: number = 0;
+  private readonly GAMEPAD_DEADZONE = 0.079; // 7% deadzone around center
 
   loadRoutes() {
     console.log('Loading routes into dropdown...');
@@ -765,21 +775,24 @@ export class RemoteControlComponent implements OnInit {
     }
   }
 
-  setGear(value: 'forward' | 'neutral' | 'reverse') {
+  setGear(value: number) {
     console.log(`Setting gear to: ${value}`);
-    this.gear = value;
     
-    // Convert gear to numeric value for MOOS-IvP
-    let gearValue = 0; // neutral
-    if (value === 'forward') gearValue = 1;
-    if (value === 'reverse') gearValue = -1;
+    // Update the local gear property for frontend display
+    if (value === 1) {
+      this.gear = 'forward';
+    } else if (value === -1) {
+      this.gear = 'reverse';
+    } else {
+      this.gear = 'neutral';
+    }
     
     if (
       this.app.data.moosIvPServer &&
       this.app.data.moosIvPServer.socket &&
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
-      this.app.data.moosIvPServer.socket.send(`DESIRED_GEAR=${gearValue}`);
+      this.app.data.moosIvPServer.socket.send(`DESIRED_GEAR=${value}`);
     }
   }
 
@@ -803,14 +816,14 @@ export class RemoteControlComponent implements OnInit {
   }
 
   increaseRudder() {
-    if (this.rudder < 30) {
+    if (this.rudder < 50) {
       this.rudder += 1;
       this.sendRudderCommand(this.rudder);
     }
   }
 
   decreaseRudder() {
-    if (this.rudder > -30) {
+    if (this.rudder > -50) {
       this.rudder -= 1;
       this.sendRudderCommand(this.rudder);
     }
@@ -956,14 +969,14 @@ export class RemoteControlComponent implements OnInit {
   // Send PID parameter value to MOOS-IvP
   sendPIDValue(parameter: 'KP' | 'KI' | 'KD', value: number) {
     const parameterName = `HEADING_${parameter}`;
-    console.log(`Setting ${parameterName} to: ${value.toFixed(1)}`);
+    console.log(`Setting ${parameterName} to: ${value.toFixed(3)}`);
     
     if (
       this.app.data.moosIvPServer &&
       this.app.data.moosIvPServer.socket &&
       this.app.data.moosIvPServer.socket.readyState === WebSocket.OPEN
     ) {
-      const message = `${parameterName}=${value.toFixed(1)}`;
+      const message = `${parameterName}=${value.toFixed(3)}`;
       console.log(`Sending to MOOS-IvP: ${message}`);
       this.app.data.moosIvPServer.socket.send(message);
     } else {
@@ -1024,5 +1037,121 @@ export class RemoteControlComponent implements OnInit {
     
     // Emit close event to parent
     this.closed.emit();
+  }
+
+  ngOnDestroy() {
+    // Clean up gamepad polling
+    if (this.gamepadPollingId) {
+      cancelAnimationFrame(this.gamepadPollingId);
+      this.gamepadPollingId = null;
+    }
+  }
+
+  private initializeGamepad() {
+    // Check if gamepad API is supported
+    if (!navigator.getGamepads) {
+      console.log('Gamepad API not supported');
+      return;
+    }
+
+    // Look for connected gamepads
+    this.detectGamepad();
+
+    // Listen for gamepad connection events
+    window.addEventListener('gamepadconnected', (e) => {
+      console.log('Gamepad connected:', e.gamepad.id);
+      this.detectGamepad();
+    });
+
+    window.addEventListener('gamepaddisconnected', (e) => {
+      console.log('Gamepad disconnected:', e.gamepad.id);
+      this.gamepadIndex = -1;
+      if (this.gamepadPollingId) {
+        cancelAnimationFrame(this.gamepadPollingId);
+        this.gamepadPollingId = null;
+      }
+    });
+  }
+
+  private detectGamepad() {
+    const gamepads = navigator.getGamepads();
+    for (let i = 0; i < gamepads.length; i++) {
+      const gamepad = gamepads[i];
+      if (gamepad && gamepad.id.toLowerCase().includes('usb pad')) {
+        console.log('Found USB Pad gamepad at index', i);
+        this.gamepadIndex = i;
+        this.startGamepadPolling();
+        break;
+      }
+    }
+  }
+
+  private startGamepadPolling() {
+    if (this.gamepadPollingId) {
+      return; // Already polling
+    }
+
+    const poll = () => {
+      const gamepads = navigator.getGamepads();
+      const gamepad = gamepads[this.gamepadIndex];
+
+      if (gamepad && gamepad.axes.length > 5) {
+        // Get Axis 3 value (-1 to 1) for rudder control
+        let axis3Value = gamepad.axes[3];
+
+        //console.log(`Usb gamepad rudder axis: ${axis3Value}`);
+        
+        // Apply deadzone - if within deadzone, set to 0
+        if (Math.abs(axis3Value) < this.GAMEPAD_DEADZONE) {
+          axis3Value = 0;
+        }
+        
+        // Map from -1,1 to -50,50 degrees for rudder
+        const rudderValue = Math.round(axis3Value * 50);
+        
+        // Get Axis 4 value for gear control
+        let axis4Value = gamepad.axes[4];
+        console.log(`Usb gamepad gear axis: ${axis4Value}`);
+        
+        // Determine gear based on axis 4 value
+        let newGear = 0;
+        if (axis4Value > 0.08) {
+          newGear = 1;
+        } else if (axis4Value < 0.05) {
+          newGear = -1;
+        } else {
+          newGear = 0;
+        }
+        
+        // Get Axis 5 value for thrust control  
+        let axis5Value = gamepad.axes[5];
+        //console.log(`Usb gamepad thrust axis: ${axis5Value}`);
+        
+        // Map axis 5 from 0.08 (0% thrust) to 0.56863 (100% thrust)
+        let thrustValue = 0;
+        if (axis5Value >= 0.08) {
+          // Map 0.08-0.56863 to 0-100%
+          const normalizedValue = (axis5Value - 0.08) / (0.56863 - 0.08);
+          thrustValue = Math.round(Math.max(0, Math.min(100, normalizedValue * 100)));
+        }
+        
+        this.ngZone.run(() => {
+          // Update rudder
+          this.rudder = rudderValue;
+          this.sendRudderCommand(this.rudder);
+          
+          // Update gear if changed - this will update both the property and send the command
+          this.setGear(newGear);
+          
+          // Update thrust
+          this.thrust = thrustValue;
+          this.sendThrustCommand(this.thrust);
+        });
+      }
+
+      this.gamepadPollingId = requestAnimationFrame(poll);
+    };
+
+    this.gamepadPollingId = requestAnimationFrame(poll);
   }
 }
