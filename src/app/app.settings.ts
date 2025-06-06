@@ -96,7 +96,7 @@
       settings.selections.preferredPaths = {
         tws: 'environment.wind.speedTrue',
         twd: 'environment.wind.directionTrue',
-        heading: 'navigation.courseOverGroundTrue',
+        heading: 'navigation.headingTrue',
         course: 'navigation.courseGreatCircle'
       };
     }
