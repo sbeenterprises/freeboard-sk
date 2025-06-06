@@ -95,6 +95,7 @@ export class AppComponent {
     aisList: false,
     anchorWatch: false,
     remoteControl: false,
+    videoMenu: false,
     navDataPanel: {
       show: false,
       nextPointCtrl: false,
@@ -131,6 +132,7 @@ export class AppComponent {
   private lastVideoUrl: string;
   private selFavourite = -1;
   public vidUrl: SafeResourceUrl;
+  public videoMenuUrl: SafeResourceUrl;
 
   public convert = Convert;
   private obsList = []; // observables array
@@ -226,6 +228,9 @@ export class AppComponent {
     this.lastVideoUrl = this.app.config.resources.video.url;
     this.vidUrl = this.dom.bypassSecurityTrustResourceUrl(
       `${this.app.config.resources.video.url}`
+    );
+    this.videoMenuUrl = this.dom.bypassSecurityTrustResourceUrl(
+      'http://192.168.143.10:5000'
     );
 
     // ** connect to signalk server and intialise
@@ -1625,6 +1630,12 @@ export class AppComponent {
       }, this.animationDelay);
     }
     
+    this.focusMap();
+  }
+
+  // Function to toggle video menu
+  public toggleVideoMenu() {
+    this.display.videoMenu = !this.display.videoMenu;
     this.focusMap();
   }
   

@@ -697,15 +697,19 @@
               <br />&nbsp;<br />
             </div>
             }
-            <!-- PiP enable -->
-            @if(app.config.resources.video.enable &&
-            app.config.resources.video.url) {
+            <!-- Video Menu Button -->
             <div class="buttonPanelItem">
-              <pip-video [src]="vidUrl" [muted]="true" (click)="focusMap()">
-              </pip-video>
+              <button
+                class="button-toolbar"
+                mat-mini-fab
+                matTooltip="Show Video"
+                matTooltipPosition="left"
+                (click)="toggleVideoMenu()"
+              >
+                <mat-icon>videocam</mat-icon>
+              </button>
               <br />&nbsp;<br />
             </div>
-            }
 
             <!-- constrain zoom to selected map(s) extent -->
             <div class="buttonPanelItem">
@@ -1058,6 +1062,25 @@
           }
         </mat-sidenav-content>
       </mat-sidenav-container>
+      
+      <!-- Horizontal Bottom Video Menu -->
+      @if(display.videoMenu) {
+      <div class="horizontal-video-menu">
+        <div class="video-menu-header">
+          <span>Video Stream</span>
+          <button mat-icon-button (click)="toggleVideoMenu()" class="close-button">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="video-menu-content">
+          <iframe 
+            [src]="videoMenuUrl" 
+            frameborder="0" 
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      }
     </div>
     <!-- /content -->
   </div>
