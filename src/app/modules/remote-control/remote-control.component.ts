@@ -1115,9 +1115,9 @@ export class RemoteControlComponent implements OnInit, OnDestroy {
         
         // Determine gear based on axis 4 value
         let newGear = 0;
-        if (axis4Value > 0.08) {
+        if (axis4Value > 0.1) {
           newGear = 1;
-        } else if (axis4Value < 0.05) {
+        } else if (axis4Value < 0.03) {
           newGear = -1;
         } else {
           newGear = 0;
