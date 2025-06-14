@@ -1087,71 +1087,131 @@ export class RemoteControlComponent implements OnInit, OnDestroy {
   }
 
   private startGamepadPolling() {
-    if (this.gamepadPollingId) {
-      return; // Already polling
+  if (this.gamepadPollingId) {
+    return; // Already polling
+  }
+
+  const poll = () => {
+    const gamepads = navigator.getGamepads();
+    const gamepad = gamepads[this.gamepadIndex];
+
+    if (gamepad && gamepad.axes.length > 5) {
+      // Get Axis 3 value for rudder control
+      let axis3Value = gamepad.axes[3];
+
+      //console.log(`Usb gamepad rudder axis: ${axis3Value}`);
+      
+      // Map gamepad axis value to rudder position using your specific mapping
+      const rudderValue = this.mapAxisToRudder(axis3Value);
+      
+      // Get Axis 4 value for gear control
+      let axis4Value = gamepad.axes[4];
+      console.log(`Usb gamepad gear axis: ${axis4Value}`);
+      
+      // Determine gear based on axis 4 value
+      let newGear = 0;
+      if (axis4Value > 0.1) {
+        newGear = 1;
+      } else if (axis4Value < 0.03) {
+        newGear = -1;
+      } else {
+        newGear = 0;
+      }
+      
+      // Get Axis 5 value for thrust control  
+      let axis5Value = gamepad.axes[5];
+      //console.log(`Usb gamepad thrust axis: ${axis5Value}`);
+      
+      // Map axis 5 from 0.08 (0% thrust) to 0.56863 (100% thrust)
+      let thrustValue = 0;
+      if (axis5Value >= 0.08) {
+        // Map 0.08-0.56863 to 0-100%
+        const normalizedValue = (axis5Value - 0.08) / (0.56863 - 0.08);
+        thrustValue = Math.round(Math.max(0, Math.min(100, normalizedValue * 100)));
+      }
+      
+      this.ngZone.run(() => {
+        // Update rudder
+        this.rudder = rudderValue;
+        this.sendRudderCommand(this.rudder);
+        
+        // Update gear if changed - this will update both the property and send the command
+        this.setGear(newGear);
+        
+        // Update thrust
+        this.thrust = thrustValue;
+        this.sendThrustCommand(this.thrust);
+      });
     }
 
-    const poll = () => {
-      const gamepads = navigator.getGamepads();
-      const gamepad = gamepads[this.gamepadIndex];
-
-      if (gamepad && gamepad.axes.length > 5) {
-        // Get Axis 3 value (-1 to 1) for rudder control
-        let axis3Value = gamepad.axes[3];
-
-        //console.log(`Usb gamepad rudder axis: ${axis3Value}`);
-        
-        // Apply deadzone - if within deadzone, set to 0
-        if (Math.abs(axis3Value) < this.GAMEPAD_DEADZONE) {
-          axis3Value = 0;
-        }
-        
-        // Map from -1,1 to -50,50 degrees for rudder
-        const rudderValue = Math.round(axis3Value * 50);
-        
-        // Get Axis 4 value for gear control
-        let axis4Value = gamepad.axes[4];
-        console.log(`Usb gamepad gear axis: ${axis4Value}`);
-        
-        // Determine gear based on axis 4 value
-        let newGear = 0;
-        if (axis4Value > 0.1) {
-          newGear = 1;
-        } else if (axis4Value < 0.03) {
-          newGear = -1;
-        } else {
-          newGear = 0;
-        }
-        
-        // Get Axis 5 value for thrust control  
-        let axis5Value = gamepad.axes[5];
-        //console.log(`Usb gamepad thrust axis: ${axis5Value}`);
-        
-        // Map axis 5 from 0.08 (0% thrust) to 0.56863 (100% thrust)
-        let thrustValue = 0;
-        if (axis5Value >= 0.08) {
-          // Map 0.08-0.56863 to 0-100%
-          const normalizedValue = (axis5Value - 0.08) / (0.56863 - 0.08);
-          thrustValue = Math.round(Math.max(0, Math.min(100, normalizedValue * 100)));
-        }
-        
-        this.ngZone.run(() => {
-          // Update rudder
-          this.rudder = rudderValue;
-          this.sendRudderCommand(this.rudder);
-          
-          // Update gear if changed - this will update both the property and send the command
-          this.setGear(newGear);
-          
-          // Update thrust
-          this.thrust = thrustValue;
-          this.sendThrustCommand(this.thrust);
-        });
-      }
-
-      this.gamepadPollingId = requestAnimationFrame(poll);
-    };
-
     this.gamepadPollingId = requestAnimationFrame(poll);
+  };
+
+  this.gamepadPollingId = requestAnimationFrame(poll);
+}
+
+private mapAxisToRudder(axisValue: number): number {
+  // Define the mapping table based on your provided values
+  // Using 0.06 as center instead of 0.06667
+  const mappingTable = [
+    { axis: -1.0, rudder: -50 },
+    { axis: -0.92941, rudder: -45 },
+    { axis: -0.81176, rudder: -40 },
+    { axis: -0.78824, rudder: -35 },
+    { axis: -0.69412, rudder: -30 },
+    { axis: -0.56078, rudder: -25 },
+    { axis: -0.45098, rudder: -20 },
+    { axis: -0.34902, rudder: -15 },
+    { axis: -0.26275, rudder: -10 },
+    { axis: -0.13725, rudder: -5 },
+    { axis: 0.06, rudder: 0 },      // Center position (changed from 0.06667)
+    { axis: 0.18431, rudder: 5 },
+    { axis: 0.30196, rudder: 10 },
+    { axis: 0.38824, rudder: 15 },
+    { axis: 0.50588, rudder: 20 },
+    { axis: 0.58431, rudder: 25 },
+    { axis: 0.69412, rudder: 30 },
+    { axis: 0.78824, rudder: 35 },
+    { axis: 0.89020, rudder: 40 },
+    { axis: 1.0, rudder: 50 }
+  ];
+
+  // Apply deadzone around center (0.06)
+  if (Math.abs(axisValue - 0.06) < this.GAMEPAD_DEADZONE) {
+    return 0;
   }
+
+  // Find the closest mapping points
+  let lowerBound = mappingTable[0];
+  let upperBound = mappingTable[mappingTable.length - 1];
+
+  for (let i = 0; i < mappingTable.length - 1; i++) {
+    if (axisValue >= mappingTable[i].axis && axisValue <= mappingTable[i + 1].axis) {
+      lowerBound = mappingTable[i];
+      upperBound = mappingTable[i + 1];
+      break;
+    }
+  }
+
+  // Handle edge cases
+  if (axisValue <= mappingTable[0].axis) {
+    return mappingTable[0].rudder;
+  }
+  if (axisValue >= mappingTable[mappingTable.length - 1].axis) {
+    return mappingTable[mappingTable.length - 1].rudder;
+  }
+
+  // Linear interpolation between the two closest points
+  const axisRange = upperBound.axis - lowerBound.axis;
+  const rudderRange = upperBound.rudder - lowerBound.rudder;
+  
+  if (axisRange === 0) {
+    return lowerBound.rudder;
+  }
+  
+  const interpolationFactor = (axisValue - lowerBound.axis) / axisRange;
+  const interpolatedRudder = lowerBound.rudder + (interpolationFactor * rudderRange);
+  
+  return Math.round(interpolatedRudder);
+}
 }
